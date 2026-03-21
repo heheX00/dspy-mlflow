@@ -1,7 +1,9 @@
 import os
 import csv
+from pathlib import Path
 from datetime import datetime, timedelta
 from elasticsearch import Elasticsearch, helpers
+
 
 # ========================
 # CONFIG (from your env)
@@ -14,7 +16,9 @@ ES_VERIFY_SSL = os.getenv("ES_VERIFY_SSL", "false").lower() == "true"
 ES_HOST = "https://xxx.xxx.xxx.xxx:xxxx"  # change if needed
 TIME_FIELD = "@timestamp"  # ⚠️ CHANGE THIS if your index uses something else (e.g. DATE, DATEADDED)
 
-OUTPUT_FILE = "output_last_7_days.csv"
+ROOT_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = ROOT_DIR / "data"
+OUTPUT_FILE = DATA_DIR / "output_last_7_days.csv"
 
 # ========================
 # CONNECT
@@ -80,6 +84,7 @@ all_fields = sorted(all_fields)
 # PASS 2: write CSV
 # ========================
 print("Writing CSV...")
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
     writer = csv.DictWriter(f, fieldnames=all_fields)

@@ -4,9 +4,10 @@ from pathlib import Path
 
 import pandas as pd
 
-INPUT_CSV = Path("data/output_last_7_days.csv")
-OUTPUT_DIR = Path("data/output_last_7_days_parts")
-ROWS_PER_FILE = 4_000
+ROOT_DIR = Path(__file__).resolve().parent.parent
+INPUT_CSV = ROOT_DIR / "data" / "output_last_7_days.csv"
+OUTPUT_DIR = ROOT_DIR / "data" / "output_last_7_days_parts"
+ROWS_PER_FILE = 5_000
 
 
 def main() -> None:
