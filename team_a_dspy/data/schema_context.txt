@@ -1,0 +1,401 @@
+# Elasticsearch Schema Context for team_a_dspy
+# Index: gkg
+# Purpose: help DSPy reason from user_question -> valid Elasticsearch Query DSL JSON.
+#
+# IMPORTANT
+# - This file is a query-planning schema guide, not a raw Elasticsearch _mapping dump.
+# - It is written to be safe and useful for text-to-Query-DSL generation.
+# - Prefer fields listed here.
+# - If a field is not listed here, do NOT invent it.
+# - Use read-only Query DSL only.
+# - Never generate write/update/delete/index/create operations.
+
+==================================================
+1. GLOBAL QUERY RULES
+==================================================
+
+1. All outputs must be valid Elasticsearch Query DSL JSON objects.
+2. Use top-level "query" for filtering.
+3. Use bool.filter whenever possible for exact / structured filtering.
+4. For ranking / top-N / "most" / "least" / "highest" / "lowest" / "safest" questions:
+   - set top-level "size": 0
+   - use aggregations under "aggs"
+5. For document retrieval questions ("show", "list", "get articles", "return documents"):
+   - use top-level "size" > 0
+   - do not force aggregations unless the question explicitly asks for grouped statistics
+6. Prefer keyword fields for:
+   - term filters
+   - terms aggregations
+   - sorting exact values
+7. Use range queries on date fields for timeframe filtering.
+8. Preserve all user constraints:
+   - timeframe
+   - region / geography
+   - entity type
+   - requested result count
+   - ranking direction
+9. Never use:
+   - script
+   - runtime_mappings
+   - update
+   - delete
+   - index
+   - create
+   - upsert
+10. Keep queries concise and production-oriented.
+11. Over-fetch aggregation candidates when downstream validation may remove bad entities.
+12. If the user asks for a rank such as top 10 and validation may remove invalid entities, it is acceptable to aggregate with size 20, 30, or 50 first.
+13. Prefer filter context over must when scoring is unnecessary.
+14. Do not invent nested structure unless it is explicitly known from mapping.
+15. When uncertain, choose the simplest valid query that preserves the user intent.
+
+==================================================
+2. DATE / TIME HANDLING
+==================================================
+
+Primary date field for query filtering:
+- V21Date
+
+Stored format:
+- ISO-8601 date or datetime string
+- examples:
+  - 2026-03-19
+  - 2026-03-19T01:00:00.000Z
+
+Important rules:
+- For V21Date, always use ISO date or ISO datetime string literals.
+- Never use compact YYYYMMDD or YYYYMMDDHHMMSS literals for V21Date.
+- Use V21Date for relative and absolute time filtering unless the task explicitly requires record-id style timestamps.
+
+Secondary record timestamp field:
+- GkgRecordId.Date
+
+Notes:
+- GkgRecordId.Date is a record timestamp / identifier-style date field.
+- It may appear in compact yyyyMMddHHmmss style.
+- Prefer V21Date for user-facing time filtering.
+
+Date handling rules:
+- "today" -> today_iso_date
+- "yesterday" -> one day before today_iso_date
+- "last 7 days" / "past 7 days" -> range from today-7days through today
+- "this month" -> first day of current month through today
+- "last month" -> first to last day of previous month
+- "this year" -> Jan 1 through today
+- Always normalize relative dates before writing the query.
+
+Preferred V21Date filter pattern:
+{
+  "range": {
+    "V21Date": {
+      "gte": "2026-03-12",
+      "lte": "2026-03-19"
+    }
+  }
+}
+
+Valid alternatives:
+{
+  "range": {
+    "V21Date": {
+      "gte": "2026-03-12T00:00:00.000Z",
+      "lte": "2026-03-19T23:59:59.999Z"
+    }
+  }
+}
+
+Do not do this for V21Date:
+{
+  "range": {
+    "V21Date": {
+      "gte": "20260312",
+      "lte": "20260319"
+    }
+  }
+}
+
+==================================================
+3. PRIMARY FIELD FAMILIES
+==================================================
+
+This index is treated as a GKG-style knowledge graph / article-enrichment index.
+The most important field families for query generation are:
+
+A. Record / document identity
+B. Time
+C. People
+D. Organizations
+E. Themes
+F. Locations / geography
+G. Source / article metadata
+H. Tone / sentiment-like metrics
+I. Counts / event-like indicators
+
+Only use fields listed here unless your live mapping explicitly confirms more.
+
+==================================================
+4. SAFE, HIGH-VALUE FIELDS
+==================================================
+
+--------------------------------
+4.1 Record and time
+--------------------------------
+
+- V21Date
+  Meaning:
+  - primary article / record time field for filtering
+  Use for:
+  - all relative and absolute time filtering
+  Query patterns:
+  - range filter with ISO string bounds only
+
+- GkgRecordId.Date
+  Meaning:
+  - record timestamp associated with the identifier
+  Use for:
+  - record tracing or special cases only
+  Important:
+  - prefer V21Date for user-facing analytics time filters
+
+Potential additional record fields often present in GKG-style indices:
+- GkgRecordId.Translingual
+- GkgRecordId.NumberInBatch
+
+Use these only if the live mapping confirms them.
+They are generally not needed for user-facing analytics queries.
+
+--------------------------------
+4.2 People
+--------------------------------
+
+Primary people aggregation/filter field:
+- V2Persons.V1Person.keyword
+
+Meaning:
+- normalized person/entity mention string
+
+Use for:
+- top people / most-mentioned people
+- filtering by a known person name
+- co-occurrence queries involving people
+
+Preferred query patterns:
+- terms aggregation on V2Persons.V1Person.keyword
+- term filter when the person name is explicit and exact
+
+Example aggregation:
+{
+  "aggs": {
+    "top_people": {
+      "terms": {
+        "field": "V2Persons.V1Person.keyword",
+        "size": 10
+      }
+    }
+  }
+}
+
+--------------------------------
+4.3 Organizations
+--------------------------------
+
+Primary organization aggregation/filter field:
+- V2Orgs.V1Org.keyword
+
+Meaning:
+- normalized organization mention string
+
+Use for:
+- top organizations
+- filtering by a named organization
+- comparing organization mention frequency
+
+Preferred query patterns:
+- terms aggregation on V2Orgs.V1Org.keyword
+- term filter for exact organization name
+
+--------------------------------
+4.4 Themes
+--------------------------------
+
+Primary theme aggregation/filter field:
+- V2EnhancedThemes.V2Theme.keyword
+
+Meaning:
+- normalized GKG theme/category label
+
+Use for:
+- top themes
+- theme prevalence over a timeframe
+- filtering to records mentioning a theme
+
+Preferred query patterns:
+- terms aggregation on V2EnhancedThemes.V2Theme.keyword
+- term / terms filter on V2EnhancedThemes.V2Theme.keyword
+
+--------------------------------
+4.5 Locations / geography
+--------------------------------
+
+Primary safe geography fields:
+- V2Locations.CountryCode
+- V2Locations.FullName.keyword
+- V2Locations.ADM1Code
+- V2Locations.FeatureId
+
+Meaning:
+- CountryCode: country code
+- FullName.keyword: exact full location string
+- ADM1Code: first-level admin code
+- FeatureId: feature identifier
+
+Use V2Locations.CountryCode for:
+- country filtering
+- top countries / most-mentioned countries
+- region-to-country workflows when region is resolved externally to a country list
+
+Use V2Locations.FullName.keyword for:
+- exact place-name aggregation
+- city or place filtering if the question is about a named location
+
+Preferred query patterns:
+- term filter on V2Locations.CountryCode
+- terms aggregation on V2Locations.CountryCode
+- term filter on V2Locations.FullName.keyword
+- terms aggregation on V2Locations.FullName.keyword
+
+Important:
+- A region such as "Middle East" is usually NOT a direct field value.
+- Resolve region requests into a list of country codes, then use a terms filter.
+
+Example region filter pattern:
+{
+  "terms": {
+    "V2Locations.CountryCode": ["SA", "AE", "QA", "KW", "OM", "BH", "IR", "IQ", "JO", "LB", "SY", "YE", "IL"]
+  }
+}
+
+--------------------------------
+4.6 Source / article metadata
+--------------------------------
+
+Useful metadata fields:
+- V2DocId
+- V2SrcCollectionId.V2SrcCollectionId
+- V2SrcCmnName.V2SrcCmnName
+- V2ExtrasXML.Title
+- V2ExtrasXML.PubTimestamp
+
+Likely uses:
+- retrieving article/document identifiers
+- filtering by source
+- grouping by source domain or source publication
+- retrieving titles
+- comparing publication timestamps versus V21Date if needed
+
+--------------------------------
+4.7 Tone / sentiment-like metrics
+--------------------------------
+
+Useful fields:
+- V15Tone.Tone
+- V15Tone.NegativeScore
+- V15Tone.PositiveScore
+- V15Tone.Polarity
+
+Use for:
+- filtering negative / positive / strong-tone records
+- ranking or constraining sentiment-like conditions
+
+Examples:
+- negative records:
+  - V15Tone.NegativeScore > 0
+- stronger overall negative tone:
+  - V15Tone.Tone < 0
+- polarity-based condition:
+  - use only if explicitly requested or already established in the task logic
+
+--------------------------------
+4.8 All-names / entity surface forms
+--------------------------------
+
+Useful field:
+- V21AllNames.Name.keyword
+
+Use for:
+- exact name surface-form aggregation
+- debugging broad entity mention behavior
+- fallback when the task is about names rather than normalized person/org fields
+
+==================================================
+5. PRACTICAL QUERY EXAMPLES
+==================================================
+
+Example: top 10 people mentioned in negative news about Iran last week
+{
+  "size": 0,
+  "query": {
+    "bool": {
+      "filter": [
+        {
+          "term": {
+            "V2Locations.CountryCode": "IR"
+          }
+        },
+        {
+          "range": {
+            "V21Date": {
+              "gte": "2026-03-12",
+              "lte": "2026-03-19"
+            }
+          }
+        },
+        {
+          "range": {
+            "V15Tone.NegativeScore": {
+              "gt": 0.5
+            }
+          }
+        }
+      ]
+    }
+  },
+  "aggs": {
+    "top_people": {
+      "terms": {
+        "field": "V2Persons.V1Person.keyword",
+        "size": 10
+      }
+    }
+  }
+}
+
+Example: retrieve 20 recent articles mentioning a named organization
+{
+  "size": 20,
+  "query": {
+    "bool": {
+      "filter": [
+        {
+          "term": {
+            "V2Orgs.V1Org.keyword": "OpenAI"
+          }
+        },
+        {
+          "range": {
+            "V21Date": {
+              "gte": "2026-03-01"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "sort": [
+    {
+      "V21Date": {
+        "order": "desc"
+      }
+    }
+  ]
+}

@@ -1,0 +1,284 @@
+{
+  "schema_enricher.enrich.predict": {
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "Turn raw mapping fields into a concise, query-aware schema context.\n\nKeep only fields that matter for answering the user's question.",
+      "fields": [
+        {
+          "prefix": "User Question:",
+          "description": "Natural language analytics question from the user."
+        },
+        {
+          "prefix": "Raw Schema Context:",
+          "description": "Candidate Elasticsearch schema fields in the form 'Field: <name>\\nType: <type>'."
+        },
+        {
+          "prefix": "Max Fields:",
+          "description": "Maximum number of fields to keep in the final enriched schema."
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Enriched Schema:",
+          "description": "Return only the most relevant fields. For each field, use exactly:\nField: <exact field name>\nType: <exact type>\nDescription: <what the field represents>\nRelevance: <how it is used for this query: filter, aggregation, grouping, date, sorting, etc>\n\nRules:\n- Keep output concise.\n- Keep exact field names unchanged.\n- Ignore irrelevant fields.\n- Prefer 4 to 8 fields unless max_fields requires otherwise.\n- Do not invent fields.\n- Do not include prose before or after the field blocks.\n- If the field is V21Date, explicitly say it is an ISO-8601 date/datetime field.\n- If the field is V21Date, explicitly say range literals must use ISO strings like 2026-03-19 or 2026-03-19T01:00:00.000Z.\n- Never describe V21Date as compact YYYYMMDD."
+        }
+      ]
+    },
+    "lm": null
+  },
+  "stocktake.predict": {
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "Understand the schema and user intent before constructing Query DSL.",
+      "fields": [
+        {
+          "prefix": "User Question:",
+          "description": "Natural language user question"
+        },
+        {
+          "prefix": "Schema Context:",
+          "description": "Relevant Elasticsearch schema / mapping notes"
+        },
+        {
+          "prefix": "Today Iso Date:",
+          "description": "Today's date as ISO format YYYY-MM-DD for relative date normalization"
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Relevant Fields:",
+          "description": "Comma-separated exact Elasticsearch fields to use"
+        },
+        {
+          "prefix": "Entity Type:",
+          "description": "Primary requested entity type, e.g. people, countries, locations, events, themes, articles"
+        },
+        {
+          "prefix": "Timeframe:",
+          "description": "Normalized time window. For V21Date, always express dates in ISO format such as YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.sssZ. Never use compact YYYYMMDD for V21Date."
+        },
+        {
+          "prefix": "Region Scope:",
+          "description": "Geographic scope or region constraint, if any"
+        },
+        {
+          "prefix": "Metric Definition:",
+          "description": "How the question should be operationalized into measurable Elasticsearch logic"
+        },
+        {
+          "prefix": "Stocktake Notes:",
+          "description": "Short reasoning summary of the schema and task shape"
+        }
+      ]
+    },
+    "lm": null
+  },
+  "filter_planner.predict": {
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "Convert stocktake into concrete filter logic.",
+      "fields": [
+        {
+          "prefix": "User Question:",
+          "description": "${user_question}"
+        },
+        {
+          "prefix": "Schema Context:",
+          "description": "${schema_context}"
+        },
+        {
+          "prefix": "Today Iso Date:",
+          "description": "${today_iso_date}"
+        },
+        {
+          "prefix": "Relevant Fields:",
+          "description": "${relevant_fields}"
+        },
+        {
+          "prefix": "Entity Type:",
+          "description": "${entity_type}"
+        },
+        {
+          "prefix": "Timeframe:",
+          "description": "${timeframe}"
+        },
+        {
+          "prefix": "Region Scope:",
+          "description": "${region_scope}"
+        },
+        {
+          "prefix": "Metric Definition:",
+          "description": "${metric_definition}"
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Filter Plan:",
+          "description": "Concrete Elasticsearch filter logic using exact fields. If filtering on V21Date, use ISO date or ISO datetime literals only."
+        },
+        {
+          "prefix": "Requested Count:",
+          "description": "Requested result count or top-N count"
+        },
+        {
+          "prefix": "Size Strategy:",
+          "description": "Either 'size=0' for ranking/aggregation or 'size>0' for document retrieval"
+        },
+        {
+          "prefix": "Filter Notes:",
+          "description": "Short reasoning summary of filters and size strategy"
+        }
+      ]
+    },
+    "lm": null
+  },
+  "agg_planner.predict": {
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "Decide aggregation/ranking/measurement strategy.",
+      "fields": [
+        {
+          "prefix": "User Question:",
+          "description": "${user_question}"
+        },
+        {
+          "prefix": "Schema Context:",
+          "description": "${schema_context}"
+        },
+        {
+          "prefix": "Relevant Fields:",
+          "description": "${relevant_fields}"
+        },
+        {
+          "prefix": "Entity Type:",
+          "description": "${entity_type}"
+        },
+        {
+          "prefix": "Metric Definition:",
+          "description": "${metric_definition}"
+        },
+        {
+          "prefix": "Filter Plan:",
+          "description": "${filter_plan}"
+        },
+        {
+          "prefix": "Requested Count:",
+          "description": "${requested_count}"
+        },
+        {
+          "prefix": "Size Strategy:",
+          "description": "${size_strategy}"
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Aggregation Plan:",
+          "description": "Precise aggregation/sort/ranking plan, including grouping field and ordering"
+        },
+        {
+          "prefix": "Validation Checklist:",
+          "description": "Checklist of what final DSL must preserve, including correct date field choice and correct literal format for date ranges."
+        },
+        {
+          "prefix": "Aggregation Notes:",
+          "description": "Short reasoning summary of aggregation strategy"
+        }
+      ]
+    },
+    "lm": null
+  },
+  "query_writer.predict": {
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "Produce final Elasticsearch Query DSL JSON only.",
+      "fields": [
+        {
+          "prefix": "User Question:",
+          "description": "${user_question}"
+        },
+        {
+          "prefix": "Schema Context:",
+          "description": "${schema_context}"
+        },
+        {
+          "prefix": "Today Iso Date:",
+          "description": "${today_iso_date}"
+        },
+        {
+          "prefix": "Relevant Fields:",
+          "description": "${relevant_fields}"
+        },
+        {
+          "prefix": "Entity Type:",
+          "description": "${entity_type}"
+        },
+        {
+          "prefix": "Timeframe:",
+          "description": "${timeframe}"
+        },
+        {
+          "prefix": "Region Scope:",
+          "description": "${region_scope}"
+        },
+        {
+          "prefix": "Metric Definition:",
+          "description": "${metric_definition}"
+        },
+        {
+          "prefix": "Filter Plan:",
+          "description": "${filter_plan}"
+        },
+        {
+          "prefix": "Requested Count:",
+          "description": "${requested_count}"
+        },
+        {
+          "prefix": "Size Strategy:",
+          "description": "${size_strategy}"
+        },
+        {
+          "prefix": "Aggregation Plan:",
+          "description": "${aggregation_plan}"
+        },
+        {
+          "prefix": "Validation Checklist:",
+          "description": "${validation_checklist}"
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Querydsl Query:",
+          "description": "Return exactly one valid Elasticsearch Query DSL JSON object. No markdown. No prose. No code fences. Read-only only. If using V21Date in a range query, use ISO date strings like '2026-03-09' or ISO datetimes like '2026-03-09T00:00:00.000Z'. Never use compact forms like '20260309' for V21Date."
+        }
+      ]
+    },
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.12",
+      "dspy": "3.1.3",
+      "cloudpickle": "3.1"
+    }
+  }
+}

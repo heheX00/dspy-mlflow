@@ -1,0 +1,20 @@
+services:
+  es-sandbox:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: es-sandbox
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms4g -Xmx4g
+    ports:
+      - "9200:9200"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.0
+    container_name: kibana-sandbox
+    environment:
+      - ELASTICSEARCH_HOSTS=http://es-sandbox:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - es-sandbox
