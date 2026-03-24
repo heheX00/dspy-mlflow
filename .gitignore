@@ -32,3 +32,10 @@ Thumbs.db
 
 # Jupyter
 .ipynb_checkpoints/
+
+# ChromaDB
+chroma_persistent/
+chroma_data/
+
+# Sandbox ES data
+sandbox_es_data/

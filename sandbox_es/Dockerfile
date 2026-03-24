@@ -1,0 +1,1 @@
+from docker.elastic.co/elasticsearch/elasticsearch:8.7.1

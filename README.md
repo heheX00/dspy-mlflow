@@ -58,6 +58,29 @@ mlflow server --host 127.0.0.1 --port 5000
 python integration/run_pipeline.py
 ```
 
+## DSPy Optimizer Workflow
+
+This repository now includes an optimizer script for the Team A query generator:
+
+- Script: `team_a_dspy/optimizers/optimize_query_generator.py`
+- Dataset template: `team_a_dspy/data/optimizer_trainset.example.jsonl`
+
+Steps:
+
+1. Copy `team_a_dspy/data/optimizer_trainset.example.jsonl` to `team_a_dspy/data/optimizer_trainset.jsonl`.
+2. Add more rows in JSONL format with:
+	 - `nl_query`
+	 - `expected_query_dsl`
+3. Run optimization:
+
+```bash
+python team_a_dspy/optimizers/optimize_query_generator.py \
+	--trainset team_a_dspy/data/optimizer_trainset.jsonl \
+	--output team_a_dspy/optimizers/artifacts/optimized_query_generator.json
+```
+
+The script uses `dspy.BootstrapFewShot` with an exact-DSL metric and saves a compiled DSPy artifact.
+
 ## Teams
 
 - **Team A (DSPy)**: Signatures, metrics, optimizers
