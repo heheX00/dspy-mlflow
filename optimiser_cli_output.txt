@@ -1,0 +1,381 @@
+(.venv) C:\Users\1e1ta\Desktop\Work\SAF\tdc_attachment\DSPY\hanbin\dspy-mlflow>python team_a_dspy\optimizers\optimize_query_generator.py --dataset team_a_dspy\data\optimizer_fullset.jsonl --train-ratio 0.8 --artifact-output team_a_dspy\optimizers\artifacts\optimized_query_generator.json --report-output team_a_dspy\optimizers\artifacts\optimization_report.json
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+  0%|                                                                                           | 0/40 [00:00<?, ?it/s]2026/03/24 19:55:43 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+  2%|██                                                                                 | 1/40 [00:05<03:35,  5.54s/it]2026/03/24 19:55:44 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+  5%|████▏                                                                              | 2/40 [00:06<01:51,  2.94s/it]2026/03/24 19:55:45 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+  8%|██████▏                                                                            | 3/40 [00:08<01:24,  2.29s/it]2026/03/24 19:55:47 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 10%|████████▎                                                                          | 4/40 [00:09<01:06,  1.86s/it]2026/03/24 19:55:48 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 12%|██████████▍                                                                        | 5/40 [00:10<00:56,  1.62s/it]2026/03/24 19:55:49 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 15%|████████████▍                                                                      | 6/40 [00:12<00:55,  1.64s/it]2026/03/24 19:55:50 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 18%|██████████████▌                                                                    | 7/40 [00:13<00:47,  1.43s/it]2026/03/24 19:55:52 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 20%|████████████████▌                                                                  | 8/40 [00:14<00:43,  1.36s/it]2026/03/24 19:55:53 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 22%|██████████████████▋                                                                | 9/40 [00:15<00:42,  1.37s/it]2026/03/24 19:55:54 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 25%|████████████████████▌                                                             | 10/40 [00:16<00:37,  1.25s/it]2026/03/24 19:55:55 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 28%|██████████████████████▌                                                           | 11/40 [00:17<00:35,  1.22s/it]2026/03/24 19:55:58 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 30%|████████████████████████▌                                                         | 12/40 [00:20<00:46,  1.66s/it]2026/03/24 19:55:59 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 32%|██████████████████████████▋                                                       | 13/40 [00:21<00:39,  1.45s/it]2026/03/24 19:56:00 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 35%|████████████████████████████▋                                                     | 14/40 [00:23<00:37,  1.46s/it]2026/03/24 19:56:02 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 38%|██████████████████████████████▊                                                   | 15/40 [00:25<00:41,  1.67s/it]2026/03/24 19:56:03 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 40%|████████████████████████████████▊                                                 | 16/40 [00:26<00:34,  1.45s/it]2026/03/24 19:56:05 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 42%|██████████████████████████████████▊                                               | 17/40 [00:28<00:36,  1.57s/it]2026/03/24 19:56:06 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 45%|████████████████████████████████████▉                                             | 18/40 [00:29<00:31,  1.44s/it]2026/03/24 19:56:07 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 48%|██████████████████████████████████████▉                                           | 19/40 [00:30<00:28,  1.35s/it]2026/03/24 19:56:09 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 50%|█████████████████████████████████████████                                         | 20/40 [00:31<00:26,  1.31s/it]2026/03/24 19:56:11 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 52%|███████████████████████████████████████████                                       | 21/40 [00:33<00:28,  1.48s/it]2026/03/24 19:56:12 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 55%|█████████████████████████████████████████████                                     | 22/40 [00:34<00:26,  1.46s/it]2026/03/24 19:56:13 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 57%|███████████████████████████████████████████████▏                                  | 23/40 [00:35<00:22,  1.30s/it]2026/03/24 19:56:14 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 60%|█████████████████████████████████████████████████▏                                | 24/40 [00:36<00:20,  1.26s/it]2026/03/24 19:56:15 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 62%|███████████████████████████████████████████████████▎                              | 25/40 [00:38<00:19,  1.29s/it]2026/03/24 19:56:17 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 65%|█████████████████████████████████████████████████████▎                            | 26/40 [00:39<00:17,  1.25s/it]2026/03/24 19:56:17 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 68%|███████████████████████████████████████████████████████▎                          | 27/40 [00:40<00:14,  1.09s/it]2026/03/24 19:56:18 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 70%|█████████████████████████████████████████████████████████▍                        | 28/40 [00:41<00:12,  1.06s/it]2026/03/24 19:56:19 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 72%|███████████████████████████████████████████████████████████▍                      | 29/40 [00:42<00:12,  1.10s/it]2026/03/24 19:56:21 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 75%|█████████████████████████████████████████████████████████████▌                    | 30/40 [00:43<00:12,  1.21s/it]2026/03/24 19:56:23 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 78%|███████████████████████████████████████████████████████████████▌                  | 31/40 [00:45<00:11,  1.33s/it]2026/03/24 19:56:24 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 80%|█████████████████████████████████████████████████████████████████▌                | 32/40 [00:47<00:11,  1.49s/it]2026/03/24 19:56:26 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 82%|███████████████████████████████████████████████████████████████████▋              | 33/40 [00:48<00:09,  1.39s/it]2026/03/24 19:56:27 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 85%|█████████████████████████████████████████████████████████████████████▋            | 34/40 [00:50<00:08,  1.46s/it]2026/03/24 19:56:28 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 88%|███████████████████████████████████████████████████████████████████████▊          | 35/40 [00:50<00:06,  1.24s/it]2026/03/24 19:56:29 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 90%|█████████████████████████████████████████████████████████████████████████▊        | 36/40 [00:51<00:04,  1.16s/it]2026/03/24 19:56:30 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 92%|███████████████████████████████████████████████████████████████████████████▊      | 37/40 [00:53<00:03,  1.25s/it]2026/03/24 19:56:32 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 95%|█████████████████████████████████████████████████████████████████████████████▉    | 38/40 [00:54<00:02,  1.25s/it]2026/03/24 19:56:33 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+ 98%|███████████████████████████████████████████████████████████████████████████████▉  | 39/40 [00:55<00:01,  1.23s/it]2026/03/24 19:56:34 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+100%|██████████████████████████████████████████████████████████████████████████████████| 40/40 [00:56<00:00,  1.42s/it]
+Bootstrapped 0 full traces after 39 examples for up to 1 rounds, amounting to 40 attempts.
+2026/03/24 19:56:35 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:56:36 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:56:38 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:56:39 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:56:41 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:56:42 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:56:43 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:56:44 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:56:46 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:56:47 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:56:48 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:56:51 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:56:52 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:56:54 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:56:56 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:56:57 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:56:59 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:00 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:02 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:03 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:05 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:07 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:08 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:10 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:12 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:13 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:14 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:15 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:17 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:19 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:21 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:24 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:25 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:28 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:29 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:30 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:31 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:33 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:34 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:35 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:36 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:37 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:38 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:39 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:40 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:41 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:43 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:44 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:48 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+2026/03/24 19:57:49 WARNING dspy.predict.predict: Not all input fields were provided to module. Present: ['nl_query', 'es_schema']. Missing: ['prev_query', 'feedback'].
+Loaded dataset: C:\Users\1e1ta\Desktop\Work\SAF\tdc_attachment\DSPY\hanbin\dspy-mlflow\team_a_dspy\data\optimizer_fullset.jsonl
+Saved train split: C:\Users\1e1ta\Desktop\Work\SAF\tdc_attachment\DSPY\hanbin\dspy-mlflow\team_a_dspy\data\splits\optimizer_trainset.jsonl
+Saved dev split: C:\Users\1e1ta\Desktop\Work\SAF\tdc_attachment\DSPY\hanbin\dspy-mlflow\team_a_dspy\data\splits\optimizer_devset.jsonl
+Saved optimized artifact: C:\Users\1e1ta\Desktop\Work\SAF\tdc_attachment\DSPY\hanbin\dspy-mlflow\team_a_dspy\optimizers\artifacts\optimized_query_generator.json
+Saved report: C:\Users\1e1ta\Desktop\Work\SAF\tdc_attachment\DSPY\hanbin\dspy-mlflow\team_a_dspy\optimizers\artifacts\optimization_report.json
+[TRAIN] examples=40 | exact_matches=0 | exact_match_rate=0.000
+[TRAIN] judge_valid=0 | judge_valid_rate=0.000
+[DEV] examples=10 | exact_matches=0 | exact_match_rate=0.000
+[DEV] judge_valid=0 | judge_valid_rate=0.000
+
+(.venv) C:\Users\1e1ta\Desktop\Work\SAF\tdc_attachment\DSPY\hanbin\dspy-mlflow>python team_a_dspy/optimizers/optimize_query_generator.py --dataset team_a_dspy/data/optimizer_fullset.jsonl --optimizer-type mipro --metric-type execution
+C:\Users\1e1ta\Desktop\Work\SAF\tdc_attachment\DSPY\hanbin\dspy-mlflow\.venv\Lib\site-packages\elasticsearch\_sync\client\__init__.py:404: SecurityWarning: Connecting to 'https://100.64.0.100:4848' using TLS with verify_certs=False is insecure
+  _transport = transport_class(
+C:\Users\1e1ta\Desktop\Work\SAF\tdc_attachment\DSPY\hanbin\dspy-mlflow\.venv\Lib\site-packages\urllib3\connectionpool.py:1097: InsecureRequestWarning: Unverified HTTPS request is being made to host '100.64.0.100'. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings
+  warnings.warn(
+2026/03/25 01:48:58 WARNING dspy.teleprompt.mipro_optimizer_v2: 'requires_permission_to_run' is deprecated and will be removed in a future version.
+2026/03/25 01:48:58 INFO dspy.teleprompt.mipro_optimizer_v2:
+RUNNING WITH THE FOLLOWING LIGHT AUTO RUN SETTINGS:
+num_trials: 10
+minibatch: False
+num_fewshot_candidates: 6
+num_instruct_candidates: 3
+valset size: 10
+
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+2026/03/25 01:48:58 INFO dspy.teleprompt.mipro_optimizer_v2:
+==> STEP 1: BOOTSTRAP FEWSHOT EXAMPLES <==
+2026/03/25 01:48:58 INFO dspy.teleprompt.mipro_optimizer_v2: These will be used as few-shot example candidates for our program and for creating instructions.
+
+2026/03/25 01:48:58 INFO dspy.teleprompt.mipro_optimizer_v2: Bootstrapping N=6 sets of demonstrations...
+Bootstrapping set 1/6
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+Bootstrapping set 2/6
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+Bootstrapping set 3/6
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+ 10%|████████▎                                                                          | 4/40 [00:53<07:58, 13.30s/it]
+Bootstrapped 4 full traces after 4 examples for up to 1 rounds, amounting to 4 attempts.
+Bootstrapping set 4/6
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+  5%|████▏                                                                              | 2/40 [00:29<09:25, 14.89s/it]
+Bootstrapped 2 full traces after 2 examples for up to 1 rounds, amounting to 2 attempts.
+Bootstrapping set 5/6
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+  5%|████▏                                                                              | 2/40 [00:23<07:18, 11.54s/it]
+Bootstrapped 2 full traces after 2 examples for up to 1 rounds, amounting to 2 attempts.
+Bootstrapping set 6/6
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+  5%|████▏                                                                              | 2/40 [00:22<07:03, 11.15s/it]
+Bootstrapped 2 full traces after 2 examples for up to 1 rounds, amounting to 2 attempts.
+2026/03/25 01:51:06 INFO dspy.teleprompt.mipro_optimizer_v2:
+==> STEP 2: PROPOSE INSTRUCTION CANDIDATES <==
+2026/03/25 01:51:06 INFO dspy.teleprompt.mipro_optimizer_v2: We will use the few-shot examples from the previous step, a generated dataset summary, a summary of the program code, and a randomly selected prompting tip to propose instructions.
+2026/03/25 01:52:07 INFO dspy.teleprompt.mipro_optimizer_v2:
+Proposing N=3 instructions...
+
+2026/03/25 01:53:56 INFO dspy.teleprompt.mipro_optimizer_v2: Proposed Instructions for Predictor 0:
+
+2026/03/25 01:53:56 INFO dspy.teleprompt.mipro_optimizer_v2: 0: Convert a natural language query into valid Elasticsearch Query DSL for the GDELT index.
+
+Rules:
+- Only use fields that appear in es_schema.
+- Never use scripts.
+- Prefer exact keyword fields for terms aggregations and exact-match filters.
+- For ranking/top-N questions, prefer top-level size=0 plus aggregations.
+- For time-bounded questions, include an explicit date range using the schema's real date field.
+- Do not invent fields like date, title, text, content, category, countryCode unless they actually appear in es_schema.
+- Output JSON only in query_dsl.
+
+2026/03/25 01:53:56 INFO dspy.teleprompt.mipro_optimizer_v2: 1: Convert a natural language query into valid Elasticsearch Query DSL for the GDELT global news index.
+
+**Query Type Decision**:
+- For **aggregation/ranking questions** (phrases like "highest", "most", "top themes", "count by", "number of articles"), use `size=0` with aggregations to get statistical results, not individual documents
+- For **retrieval questions** (phrases like "which articles", "show me", "list", "find articles"), return actual documents with appropriate `size` limit and `_source` field selection
+
+**Field Selection**:
+- Use only fields that appear in the provided `es_schema`
+- For exact-match filters on text fields, use the `.keyword` subfield (e.g., `V2EnhancedThemes.V2Theme.keyword`)
+- Use date fields (type: `date`) or long date fields (type: `long`) for temporal filtering
+- Prefer keyword fields for terms aggregations and exact-match filters
+- Never invent fields like "date", "title", "text", "content", "category", or "countryCode" unless they appear in the schema
+
+**Query Construction**:
+- For time-bounded questions, include an explicit date range using `now-Xd/d` to `now/d` date math format
+- Combine multiple filter conditions using `bool.must` clauses
+- For negative sentiment queries, use `V15Tone.NegativeScore` sort in descending order
+- For wildcard matching on themes/categories, use the base text field (not `.keyword`) with wildcard patterns
+- Never use Painless scripts
+
+**Output Format**:
+- Output JSON only in the `query_dsl` field
+- The `reasoning` field should explain the query construction logic step by step, including how you identified the query type and which fields you selected from the schema
+
+2026/03/25 01:53:56 INFO dspy.teleprompt.mipro_optimizer_v2: 2: You are an expert Elasticsearch Query DSL engineer specializing in the GDELT (Global Database of Events, Language, and Tone) global news dataset. Your specialty is translating complex natural language requests into precise, executable Elasticsearch queries that leverage the rich GDELT metadata schema including temporal filters, geographic country codes, thematic taxonomies (CRISISLEX, EPU_*, ENV_*), and sentiment scores (V15Tone).
+
+Your task is to convert natural language queries into valid Elasticsearch Query DSL for the GDELT index.
+
+**Step-by-Step Reasoning Process:**
+
+1. **Analyze the Query Intent**: Identify what the user is asking for - is it a ranking/counting question (requiring aggregations), a retrieval question (requiring document return), a filtering question, or a combination? Determine if temporal constraints exist and what sentiment or thematic filters apply.
+
+2. **Map Requirements to Schema Fields**: For each requirement in the natural language query, identify the corresponding schema field from the provided es_schema. Match intent to field types (text for matching, keyword for exact terms, date for time filters, boolean for flags, float for numerical sorting/filtering).
+
+3. **Apply Domain-Specific Rules**:
+   - Use exact keyword fields (e.g., `.keyword` suffix) for exact-match filters and aggregations
+   - For ranking/top-N questions about counts or frequencies, use `size=0` with aggregations
+   - For retrieving top-N documents sorted by a metric, use appropriate `size` and `sort`
+   - For time-bounded queries, use explicit date ranges with the schema's date fields
+   - Never invent fields not present in the provided schema
+   - Never use script queries
+   - Use wildcard patterns (e.g., "CRISIS*") for theme matching when appropriate
+
+4. **Construct the Query DSL**: Build the JSON query structure using the appropriate query types (bool queries for combining filters, range queries for dates, term/wildcard queries for matching).
+
+**Critical Constraints:**
+- ONLY use fields that appear in the provided es_schema
+- Use the correct field types (long for dates stored as long, date for date types, float for scores, boolean for flags)
+- Prefer keyword versions for exact matching and aggregations
+- Apply proper date range syntax (e.g., `now-1d/d` for yesterday, `now-7d/d` for past week)
+- Include `_source` field selection to return relevant metadata
+- Output ONLY valid JSON in the query_dsl field
+
+**GDELT-Specific Patterns to Remember:**
+- Sentiment fields: V15Tone.NegativeScore, V15Tone.PositiveScore, V15Tone.Polarity, V15Tone.ActivityRefDensity
+- Theme fields: V2EnhancedThemes.V2Theme (supports wildcard patterns like "CRISIS*")
+- Date fields: GkgRecordId.Date (long), V21Date (date), V2ExtrasXML.PubTimestamp (date)
+- Translingual flag: GkgRecordId.Translingual (boolean)
+- Use terms aggregations for counting/categorizing, sort for ranking documents
+
+2026/03/25 01:53:56 INFO dspy.teleprompt.mipro_optimizer_v2:
+
+2026/03/25 01:53:56 INFO dspy.teleprompt.mipro_optimizer_v2: ==> STEP 3: FINDING OPTIMAL PROMPT PARAMETERS <==
+2026/03/25 01:53:56 INFO dspy.teleprompt.mipro_optimizer_v2: We will evaluate the program over a series of trials with different combinations of instructions and few-shot examples to find the optimal combination using Bayesian Optimization.
+
+2026/03/25 01:53:56 INFO dspy.teleprompt.mipro_optimizer_v2: == Trial 1 / 10 - Full Evaluation of Default Program ==
+Average Metric: 5.34 / 10 (53.4%): : 11it [10:52, 59.28s/it]
+2026/03/25 02:04:48 INFO dspy.evaluate.evaluate: Average Metric: 5.3416 / 10 (53.4%)
+2026/03/25 02:04:48 INFO dspy.teleprompt.mipro_optimizer_v2: Default program score: 53.42
+
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+C:\Users\1e1ta\Desktop\Work\SAF\tdc_attachment\DSPY\hanbin\dspy-mlflow\.venv\Lib\site-packages\dspy\teleprompt\mipro_optimizer_v2.py:646: ExperimentalWarning: Argument ``multivariate`` is an experimental feature. The interface can change in the future.
+  sampler = optuna.samplers.TPESampler(seed=seed, multivariate=True)
+2026/03/25 02:04:48 INFO dspy.teleprompt.mipro_optimizer_v2: ===== Trial 2 / 10 =====
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+Average Metric: 5.18 / 10 (51.8%): 100%|███████████████████████████████████████████████| 10/10 [01:14<00:00,  7.49s/it]
+2026/03/25 02:06:03 INFO dspy.evaluate.evaluate: Average Metric: 5.1842999999999995 / 10 (51.8%)
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+2026/03/25 02:06:03 INFO dspy.teleprompt.mipro_optimizer_v2: Score: 51.84 with parameters ['Predictor 0: Instruction 1', 'Predictor 0: Few-Shot Set 3'].
+2026/03/25 02:06:03 INFO dspy.teleprompt.mipro_optimizer_v2: Scores so far: [53.42, 51.84]
+2026/03/25 02:06:03 INFO dspy.teleprompt.mipro_optimizer_v2: Best score so far: 53.42
+2026/03/25 02:06:03 INFO dspy.teleprompt.mipro_optimizer_v2: ========================
+
+
+2026/03/25 02:06:03 INFO dspy.teleprompt.mipro_optimizer_v2: ===== Trial 3 / 10 =====
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+Average Metric: 5.61 / 10 (56.1%): 100%|███████████████████████████████████████████████| 10/10 [04:27<00:00, 26.71s/it]
+2026/03/25 02:10:30 INFO dspy.evaluate.evaluate: Average Metric: 5.6129 / 10 (56.1%)
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+2026/03/25 02:10:30 INFO dspy.teleprompt.mipro_optimizer_v2: Best full score so far! Score: 56.13
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+2026/03/25 02:10:30 INFO dspy.teleprompt.mipro_optimizer_v2: Score: 56.13 with parameters ['Predictor 0: Instruction 2', 'Predictor 0: Few-Shot Set 0'].
+2026/03/25 02:10:30 INFO dspy.teleprompt.mipro_optimizer_v2: Scores so far: [53.42, 51.84, 56.13]
+2026/03/25 02:10:30 INFO dspy.teleprompt.mipro_optimizer_v2: Best score so far: 56.13
+2026/03/25 02:10:30 INFO dspy.teleprompt.mipro_optimizer_v2: ========================
+
+
+2026/03/25 02:10:30 INFO dspy.teleprompt.mipro_optimizer_v2: ===== Trial 4 / 10 =====
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+Average Metric: 5.99 / 10 (59.9%): 100%|███████████████████████████████████████████████| 10/10 [02:17<00:00, 13.75s/it]
+2026/03/25 02:12:48 INFO dspy.evaluate.evaluate: Average Metric: 5.9895 / 10 (59.9%)
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+2026/03/25 02:12:48 INFO dspy.teleprompt.mipro_optimizer_v2: Best full score so far! Score: 59.89
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+2026/03/25 02:12:48 INFO dspy.teleprompt.mipro_optimizer_v2: Score: 59.89 with parameters ['Predictor 0: Instruction 1', 'Predictor 0: Few-Shot Set 5'].
+2026/03/25 02:12:48 INFO dspy.teleprompt.mipro_optimizer_v2: Scores so far: [53.42, 51.84, 56.13, 59.89]
+2026/03/25 02:12:48 INFO dspy.teleprompt.mipro_optimizer_v2: Best score so far: 59.89
+2026/03/25 02:12:48 INFO dspy.teleprompt.mipro_optimizer_v2: ========================
+
+
+2026/03/25 02:12:48 INFO dspy.teleprompt.mipro_optimizer_v2: ===== Trial 5 / 10 =====
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+Average Metric: 5.84 / 10 (58.4%): 100%|███████████████████████████████████████████████| 10/10 [00:38<00:00,  3.82s/it]
+2026/03/25 02:13:26 INFO dspy.evaluate.evaluate: Average Metric: 5.8378000000000005 / 10 (58.4%)
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+2026/03/25 02:13:26 INFO dspy.teleprompt.mipro_optimizer_v2: Score: 58.38 with parameters ['Predictor 0: Instruction 2', 'Predictor 0: Few-Shot Set 2'].
+2026/03/25 02:13:26 INFO dspy.teleprompt.mipro_optimizer_v2: Scores so far: [53.42, 51.84, 56.13, 59.89, 58.38]
+2026/03/25 02:13:26 INFO dspy.teleprompt.mipro_optimizer_v2: Best score so far: 59.89
+2026/03/25 02:13:26 INFO dspy.teleprompt.mipro_optimizer_v2: ========================
+
+
+2026/03/25 02:13:26 INFO dspy.teleprompt.mipro_optimizer_v2: ===== Trial 6 / 10 =====
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+Average Metric: 6.03 / 10 (60.3%): 100%|███████████████████████████████████████████████| 10/10 [00:33<00:00,  3.34s/it]
+2026/03/25 02:13:59 INFO dspy.evaluate.evaluate: Average Metric: 6.0323 / 10 (60.3%)
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+2026/03/25 02:13:59 INFO dspy.teleprompt.mipro_optimizer_v2: Best full score so far! Score: 60.32
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+2026/03/25 02:13:59 INFO dspy.teleprompt.mipro_optimizer_v2: Score: 60.32 with parameters ['Predictor 0: Instruction 0', 'Predictor 0: Few-Shot Set 5'].
+2026/03/25 02:13:59 INFO dspy.teleprompt.mipro_optimizer_v2: Scores so far: [53.42, 51.84, 56.13, 59.89, 58.38, 60.32]
+2026/03/25 02:13:59 INFO dspy.teleprompt.mipro_optimizer_v2: Best score so far: 60.32
+2026/03/25 02:13:59 INFO dspy.teleprompt.mipro_optimizer_v2: ========================
+
+
+2026/03/25 02:13:59 INFO dspy.teleprompt.mipro_optimizer_v2: ===== Trial 7 / 10 =====
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+Average Metric: 5.61 / 10 (56.1%): 100%|███████████████████████████████████████████████| 10/10 [00:02<00:00,  3.61it/s]
+2026/03/25 02:14:02 INFO dspy.evaluate.evaluate: Average Metric: 5.6129 / 10 (56.1%)
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+2026/03/25 02:14:02 INFO dspy.teleprompt.mipro_optimizer_v2: Score: 56.13 with parameters ['Predictor 0: Instruction 2', 'Predictor 0: Few-Shot Set 0'].
+2026/03/25 02:14:02 INFO dspy.teleprompt.mipro_optimizer_v2: Scores so far: [53.42, 51.84, 56.13, 59.89, 58.38, 60.32, 56.13]
+2026/03/25 02:14:02 INFO dspy.teleprompt.mipro_optimizer_v2: Best score so far: 60.32
+2026/03/25 02:14:02 INFO dspy.teleprompt.mipro_optimizer_v2: ========================
+
+
+2026/03/25 02:14:02 INFO dspy.teleprompt.mipro_optimizer_v2: ===== Trial 8 / 10 =====
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+Average Metric: 5.61 / 10 (56.1%): 100%|███████████████████████████████████████████████| 10/10 [02:34<00:00, 15.43s/it]
+2026/03/25 02:16:36 INFO dspy.evaluate.evaluate: Average Metric: 5.6095 / 10 (56.1%)
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+2026/03/25 02:16:36 INFO dspy.teleprompt.mipro_optimizer_v2: Score: 56.09 with parameters ['Predictor 0: Instruction 2', 'Predictor 0: Few-Shot Set 5'].
+2026/03/25 02:16:36 INFO dspy.teleprompt.mipro_optimizer_v2: Scores so far: [53.42, 51.84, 56.13, 59.89, 58.38, 60.32, 56.13, 56.09]
+2026/03/25 02:16:36 INFO dspy.teleprompt.mipro_optimizer_v2: Best score so far: 60.32
+2026/03/25 02:16:36 INFO dspy.teleprompt.mipro_optimizer_v2: ========================
+
+
+2026/03/25 02:16:36 INFO dspy.teleprompt.mipro_optimizer_v2: ===== Trial 9 / 10 =====
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+Average Metric: 7.07 / 10 (70.7%): 100%|███████████████████████████████████████████████| 10/10 [00:53<00:00,  5.36s/it]
+2026/03/25 02:17:30 INFO dspy.evaluate.evaluate: Average Metric: 7.071 / 10 (70.7%)
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+2026/03/25 02:17:30 INFO dspy.teleprompt.mipro_optimizer_v2: Best full score so far! Score: 70.71
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+2026/03/25 02:17:30 INFO dspy.teleprompt.mipro_optimizer_v2: Score: 70.71 with parameters ['Predictor 0: Instruction 1', 'Predictor 0: Few-Shot Set 4'].
+2026/03/25 02:17:30 INFO dspy.teleprompt.mipro_optimizer_v2: Scores so far: [53.42, 51.84, 56.13, 59.89, 58.38, 60.32, 56.13, 56.09, 70.71]
+2026/03/25 02:17:30 INFO dspy.teleprompt.mipro_optimizer_v2: Best score so far: 70.71
+2026/03/25 02:17:30 INFO dspy.teleprompt.mipro_optimizer_v2: ========================
+
+
+2026/03/25 02:17:30 INFO dspy.teleprompt.mipro_optimizer_v2: ===== Trial 10 / 10 =====
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+Average Metric: 5.61 / 10 (56.1%): 100%|███████████████████████████████████████████████| 10/10 [00:02<00:00,  4.18it/s]
+2026/03/25 02:17:32 INFO dspy.evaluate.evaluate: Average Metric: 5.6095 / 10 (56.1%)
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+2026/03/25 02:17:32 INFO dspy.teleprompt.mipro_optimizer_v2: Score: 56.09 with parameters ['Predictor 0: Instruction 2', 'Predictor 0: Few-Shot Set 5'].
+2026/03/25 02:17:32 INFO dspy.teleprompt.mipro_optimizer_v2: Scores so far: [53.42, 51.84, 56.13, 59.89, 58.38, 60.32, 56.13, 56.09, 70.71, 56.09]
+2026/03/25 02:17:32 INFO dspy.teleprompt.mipro_optimizer_v2: Best score so far: 70.71
+2026/03/25 02:17:32 INFO dspy.teleprompt.mipro_optimizer_v2: =========================
+
+
+2026/03/25 02:17:32 INFO dspy.teleprompt.mipro_optimizer_v2: ===== Trial 11 / 10 =====
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+Average Metric: 7.07 / 10 (70.7%): 100%|███████████████████████████████████████████████| 10/10 [00:01<00:00,  5.16it/s]
+2026/03/25 02:17:35 INFO dspy.evaluate.evaluate: Average Metric: 7.071 / 10 (70.7%)
+WARNING:root:Failed to deep copy attribute 'chroma_client' of SchemaRetriever, falling back to shallow copy or reference copy.
+2026/03/25 02:17:35 INFO dspy.teleprompt.mipro_optimizer_v2: Score: 70.71 with parameters ['Predictor 0: Instruction 1', 'Predictor 0: Few-Shot Set 4'].
+2026/03/25 02:17:35 INFO dspy.teleprompt.mipro_optimizer_v2: Scores so far: [53.42, 51.84, 56.13, 59.89, 58.38, 60.32, 56.13, 56.09, 70.71, 56.09, 70.71]
+2026/03/25 02:17:35 INFO dspy.teleprompt.mipro_optimizer_v2: Best score so far: 70.71
+2026/03/25 02:17:35 INFO dspy.teleprompt.mipro_optimizer_v2: =========================
+
+
+2026/03/25 02:17:35 INFO dspy.teleprompt.mipro_optimizer_v2: Returning best identified program with score 70.71!
+Loaded dataset: C:\Users\1e1ta\Desktop\Work\SAF\tdc_attachment\DSPY\hanbin\dspy-mlflow\team_a_dspy\data\optimizer_fullset.jsonl
+Saved train split: C:\Users\1e1ta\Desktop\Work\SAF\tdc_attachment\DSPY\hanbin\dspy-mlflow\team_a_dspy\data\splits\optimizer_trainset.jsonl
+Saved dev split: C:\Users\1e1ta\Desktop\Work\SAF\tdc_attachment\DSPY\hanbin\dspy-mlflow\team_a_dspy\data\splits\optimizer_devset.jsonl
+Saved optimized artifact: C:\Users\1e1ta\Desktop\Work\SAF\tdc_attachment\DSPY\hanbin\dspy-mlflow\team_a_dspy\optimizers\artifacts\optimized_query_generator.json
+Saved report: C:\Users\1e1ta\Desktop\Work\SAF\tdc_attachment\DSPY\hanbin\dspy-mlflow\team_a_dspy\optimizers\artifacts\optimization_report.json
+[TRAIN] examples=40 | exact_matches=1 | exact_match_rate=0.025
+[TRAIN] judge_valid=0 | judge_valid_rate=0.000 | avg_judge_score=0.617
+[DEV] examples=10 | exact_matches=0 | exact_match_rate=0.000
+[DEV] judge_valid=0 | judge_valid_rate=0.000 | avg_judge_score=0.707

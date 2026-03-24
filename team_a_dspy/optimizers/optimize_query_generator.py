@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import argparse
-import asyncio
 import json
 import random
 import sys
@@ -8,41 +9,39 @@ from typing import Any
 
 import dspy
 
-# Allow running this file directly from anywhere in the repo.
 THIS_FILE = Path(__file__).resolve()
 TEAM_A_ROOT = THIS_FILE.parents[1]
 if str(TEAM_A_ROOT) not in sys.path:
     sys.path.insert(0, str(TEAM_A_ROOT))
 
+from metrics.es_query_metric import ExecutionAwareESMetric, metric_exact_query_dsl, normalize_query_dsl
 from services.chroma_client import ChromaClient
 from services.config import settings
+from services.es_client import ESClient
 from services.judge_dspy import JudgeDSPY
 from services.sandbox_es_client import SandboxESClient
 from signatures.es_query_generator import NLToQuerySignature
 from signatures.schema_interpreter import SchemaRetriever
 
+
 class OptimizableNLToQueryDSL(dspy.Module):
-    """
-    Optimization target for first-pass Query DSL generation.
-
-    This stays aligned with the repo's production flow:
-    - retrieve schema from ChromaDB
-    - generate Query DSL with DSPy ChainOfThought
-
-    It intentionally does not include the async judge/refinement loop because
-    BootstrapFewShot expects a synchronous student program for compilation.
-    Judge-based validation is handled in the post-compile evaluation phase.
-    """
-
-    def __init__(self, chroma_client: ChromaClient):
+    def __init__(self):
         super().__init__()
-        self.schema_retriever = SchemaRetriever(chroma_client=chroma_client)
         self.generate_query = dspy.ChainOfThought(NLToQuerySignature)
 
-    def forward(self, nl_query: str):
-        es_schema = self.schema_retriever(nl_query=nl_query)
+    def forward(self, nl_query: str, es_schema: str) -> dspy.Prediction:
         generated_query = self.generate_query(nl_query=nl_query, es_schema=es_schema)
         return dspy.Prediction(query_dsl=generated_query.query_dsl)
+
+
+def configure_lm() -> None:
+    lm = dspy.LM(
+        base_url=settings.llm_base_url,
+        model=f"openai/{settings.llm_model_name}",
+        api_key=settings.llm_api_key,
+        temperature=0.0,
+    )
+    dspy.configure(lm=lm)
 
 
 def load_jsonl_rows(path: Path) -> list[dict[str, Any]]:
@@ -62,16 +61,6 @@ def load_jsonl_rows(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def rows_to_examples(rows: list[dict[str, Any]]) -> list[dspy.Example]:
-    return [
-        dspy.Example(
-            nl_query=row["nl_query"],
-            expected_query_dsl=row["expected_query_dsl"],
-        ).with_inputs("nl_query")
-        for row in rows
-    ]
-
-
 def write_jsonl_rows(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as f:
@@ -79,11 +68,7 @@ def write_jsonl_rows(path: Path, rows: list[dict[str, Any]]) -> None:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
-def split_rows(
-    rows: list[dict[str, Any]],
-    train_ratio: float,
-    seed: int,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def split_rows(rows: list[dict[str, Any]], train_ratio: float, seed: int) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if not rows:
         raise ValueError("Dataset is empty. Add at least one JSONL row.")
     if len(rows) < 2:
@@ -92,129 +77,171 @@ def split_rows(
         raise ValueError("train_ratio must be between 0 and 1.")
 
     shuffled = list(rows)
-    rng = random.Random(seed)
-    rng.shuffle(shuffled)
-
-    split_index = int(len(shuffled) * train_ratio)
-    split_index = max(1, min(len(shuffled) - 1, split_index))
-    train_rows = shuffled[:split_index]
-    dev_rows = shuffled[split_index:]
-    return train_rows, dev_rows
+    random.Random(seed).shuffle(shuffled)
+    split_index = max(1, min(len(shuffled) - 1, int(len(shuffled) * train_ratio)))
+    return shuffled[:split_index], shuffled[split_index:]
 
 
-def normalize_query_dsl(payload: Any) -> dict[str, Any]:
-    if not isinstance(payload, dict):
-        return {}
-    nested = payload.get("query_dsl")
-    if isinstance(nested, dict):
-        return nested
-    return payload
+def build_field_aliases(field_name: str) -> list[str]:
+    aliases = [field_name, field_name.lower(), field_name.replace(".", " ").lower()]
+    aliases.extend(field_name.split("."))
+
+    lname = field_name.lower()
+    if "countrycode" in lname:
+        aliases.extend(["country", "country code", "location country"])
+    if "person" in lname:
+        aliases.extend(["person", "people", "individual"])
+    if "organization" in lname or "org" in lname:
+        aliases.extend(["organization", "company", "institution"])
+    if "theme" in lname:
+        aliases.extend(["theme", "topic", "category"])
+    if "tone" in lname or "polarity" in lname or "negative" in lname or "positive" in lname:
+        aliases.extend(["tone", "sentiment", "polarity", "negative score", "positive score"])
+    if "date" in lname or "time" in lname:
+        aliases.extend(["date", "time", "timestamp", "day", "week", "month"])
+    if "src" in lname or "source" in lname:
+        aliases.extend(["source", "publisher", "news source"])
+
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for alias in aliases:
+        cleaned = alias.strip()
+        if cleaned and cleaned not in seen:
+            seen.add(cleaned)
+            deduped.append(cleaned)
+    return deduped
 
 
-def metric_exact_query_dsl(
-    example: dspy.Example,
-    pred: dspy.Prediction,
-    trace=None,
-) -> float:
-    expected = normalize_query_dsl(example.expected_query_dsl)
-    predicted = normalize_query_dsl(pred.query_dsl)
-    return 1.0 if expected == predicted else 0.0
+def ensure_chroma_has_schema(chroma_client: ChromaClient) -> None:
+    if chroma_client.count() > 0:
+        return
 
-
-def configure_lm() -> None:
-    lm = dspy.LM(
-        base_url=settings.llm_base_url,
-        model=f"openai/{settings.llm_model_name}",
-        api_key=settings.llm_api_key,
-        temperature=0.0,
+    es_client = ESClient(
+        host=settings.es_host,
+        username=settings.es_username,
+        password=settings.es_password,
+        index=settings.es_index,
+        verify_ssl=settings.es_verify_ssl,
     )
-    dspy.configure(lm=lm)
-
-
-def run_async(coro):
     try:
-        return asyncio.run(coro)
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        try:
-            return loop.run_until_complete(coro)
-        finally:
-            loop.close()
+        flat_mapping = es_client.flatten_es_mapping()
+        docs: list[dict[str, str]] = []
+        for field_name, field_type in sorted(flat_mapping.items()):
+            aliases = build_field_aliases(field_name)
+            interpretation = "\n".join(
+                [
+                    f"Field: {field_name}",
+                    f"Type: {field_type}",
+                    f"Aliases: {', '.join(aliases)}",
+                    f"Usage: Use this field when the user asks about {', '.join(aliases[:6])}.",
+                ]
+            )
+            docs.append(
+                {
+                    "field_name": field_name,
+                    "field_type": field_type,
+                    "interpretation": interpretation,
+                }
+            )
+        chroma_client.add_documents(docs)
+    finally:
+        es_client.close()
 
 
-def evaluate_program(
-    program: dspy.Module,
-    eval_rows: list[dict[str, Any]],
-    *,
-    run_judge_validation: bool,
-) -> dict[str, Any]:
-    judge = None
-    if run_judge_validation:
-        judge = JudgeDSPY(
-            sandbox_es_client=SandboxESClient(host="http://localhost:9200")
+def enrich_rows_with_schema(rows: list[dict[str, Any]], retriever: SchemaRetriever) -> list[dict[str, Any]]:
+    enriched_rows: list[dict[str, Any]] = []
+    for row in rows:
+        enriched = dict(row)
+        enriched["es_schema"] = retriever(row["nl_query"])
+        enriched_rows.append(enriched)
+    return enriched_rows
+
+
+def rows_to_examples(rows: list[dict[str, Any]]) -> list[dspy.Example]:
+    examples: list[dspy.Example] = []
+    for row in rows:
+        examples.append(
+            dspy.Example(
+                nl_query=row["nl_query"],
+                es_schema=row["es_schema"],
+                query_dsl=normalize_query_dsl(row["expected_query_dsl"]),
+            ).with_inputs("nl_query", "es_schema")
+        )
+    return examples
+
+
+def build_optimizer(metric_callable, optimizer_type: str):
+    optimizer_type = optimizer_type.lower().strip()
+    if optimizer_type == "mipro":
+        mipro_cls = getattr(dspy, "MIPROv2", None)
+        if mipro_cls is not None:
+            return mipro_cls(metric=metric_callable, auto="light")
+        print("WARNING: dspy.MIPROv2 not available; falling back to BootstrapFewShot.")
+
+    return dspy.BootstrapFewShot(
+        metric=metric_callable,
+        max_bootstrapped_demos=4,
+        max_labeled_demos=4,
+    )
+
+
+def compile_program(
+    student: dspy.Module,
+    trainset: list[dspy.Example],
+    devset: list[dspy.Example],
+    metric_callable,
+    optimizer_type: str,
+):
+    teleprompter = build_optimizer(metric_callable, optimizer_type)
+    compile_kwargs = {"student": student, "trainset": trainset}
+    if teleprompter.__class__.__name__ == "MIPROv2":
+        compile_kwargs["valset"] = devset
+        compile_kwargs["requires_permission_to_run"] = False
+    return teleprompter, teleprompter.compile(**compile_kwargs)
+
+
+def evaluate_program(program: dspy.Module, eval_rows: list[dict[str, Any]], judge: JudgeDSPY) -> dict[str, Any]:
+    results: list[dict[str, Any]] = []
+    exact_matches = 0
+    valid_queries = 0
+
+    for idx, row in enumerate(eval_rows, start=1):
+        expected = normalize_query_dsl(row["expected_query_dsl"])
+        prediction = program(nl_query=row["nl_query"], es_schema=row["es_schema"])
+        predicted = normalize_query_dsl(prediction.query_dsl)
+        exact_match = predicted == expected
+        if exact_match:
+            exact_matches += 1
+
+        judge_result = judge.evaluate_query_dsl(generated_query_dsl=predicted, expected_query_dsl=expected)
+        if judge_result.get("is_valid"):
+            valid_queries += 1
+
+        results.append(
+            {
+                "index": idx,
+                "nl_query": row["nl_query"],
+                "es_schema": row["es_schema"],
+                "exact_match": exact_match,
+                "expected_query_dsl": expected,
+                "predicted_query_dsl": predicted,
+                "judge_result": judge_result,
+            }
         )
 
     total = len(eval_rows)
-    exact_matches = 0
-    valid_queries = 0
-    judged_queries = 0
-    results: list[dict[str, Any]] = []
-
-    try:
-        for idx, row in enumerate(eval_rows, start=1):
-            nl_query = row["nl_query"]
-            expected = normalize_query_dsl(row["expected_query_dsl"])
-
-            prediction = program(nl_query=nl_query)
-            predicted = normalize_query_dsl(prediction.query_dsl)
-            exact_match = predicted == expected
-            if exact_match:
-                exact_matches += 1
-
-            judge_result: dict[str, Any] | None = None
-            if judge is not None:
-                judged_queries += 1
-                try:
-                    judge_result = run_async(
-                        judge.evaluate_query_dsl({"query_dsl": predicted})
-                    )
-                    if judge_result.get("is_valid"):
-                        valid_queries += 1
-                except Exception as exc:
-                    judge_result = {
-                        "is_valid": False,
-                        "feedback": f"Judge validation failed: {type(exc).__name__}: {exc}",
-                    }
-
-            results.append(
-                {
-                    "index": idx,
-                    "nl_query": nl_query,
-                    "exact_match": exact_match,
-                    "expected_query_dsl": expected,
-                    "predicted_query_dsl": predicted,
-                    "judge_result": judge_result,
-                }
-            )
-    finally:
-        if judge is not None:
-            try:
-                run_async(judge.es_client.close())
-            except Exception:
-                pass
-
-    summary: dict[str, Any] = {
+    summary = {
         "num_examples": total,
         "exact_matches": exact_matches,
-        "exact_match_rate": (exact_matches / total) if total else 0.0,
+        "exact_match_rate": exact_matches / total if total else 0.0,
+        "judge_validation": {
+            "num_judged": total,
+            "num_valid": valid_queries,
+            "valid_rate": valid_queries / total if total else 0.0,
+        },
+        "avg_judge_score": sum(item["judge_result"]["score"] for item in results) / total if total else 0.0,
         "results": results,
     }
-    if judge is not None:
-        summary["judge_validation"] = {
-            "num_judged": judged_queries,
-            "num_valid": valid_queries,
-            "valid_rate": (valid_queries / judged_queries) if judged_queries else 0.0,
-        }
     return summary
 
 
@@ -224,57 +251,32 @@ def print_summary(label: str, summary: dict[str, Any]) -> None:
         f"exact_matches={summary['exact_matches']} | "
         f"exact_match_rate={summary['exact_match_rate']:.3f}"
     )
-    judge_validation = summary.get("judge_validation")
-    if judge_validation:
-        print(
-            f"[{label}] judge_valid={judge_validation['num_valid']} | "
-            f"judge_valid_rate={judge_validation['valid_rate']:.3f}"
-        )
+    judge_validation = summary["judge_validation"]
+    print(
+        f"[{label}] judge_valid={judge_validation['num_valid']} | "
+        f"judge_valid_rate={judge_validation['valid_rate']:.3f} | "
+        f"avg_judge_score={summary['avg_judge_score']:.3f}"
+    )
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description=(
-            "Split a JSONL dataset, optimize the Team A DSPy query generator on the "
-            "train split, and evaluate the compiled program on the dev split."
-        )
-    )
-    parser.add_argument(
-        "--dataset",
-        default=str(TEAM_A_ROOT / "data" / "optimizer_devset.jsonl"),
-        help="Path to a JSONL dataset with nl_query and expected_query_dsl fields.",
-    )
-    parser.add_argument(
-        "--train-ratio",
-        type=float,
-        default=0.8,
-        help="Fraction of examples to use for the optimizer train split.",
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=42,
-        help="Random seed for reproducible train/dev splits.",
-    )
+    parser = argparse.ArgumentParser(description="Optimize the Team A DSPy Elasticsearch query generator.")
+    parser.add_argument("--dataset", default=str(TEAM_A_ROOT / "data" / "optimizer_fullset.jsonl"))
+    parser.add_argument("--train-ratio", type=float, default=0.8)
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--optimizer-type", choices=["bootstrap", "mipro"], default="mipro")
+    parser.add_argument("--metric-type", choices=["execution", "exact"], default="execution")
     parser.add_argument(
         "--artifact-output",
         default=str(TEAM_A_ROOT / "optimizers" / "artifacts" / "optimized_query_generator.json"),
-        help="Path to save the compiled DSPy program artifact.",
     )
     parser.add_argument(
         "--report-output",
         default=str(TEAM_A_ROOT / "optimizers" / "artifacts" / "optimization_report.json"),
-        help="Path to save the train/dev split and evaluation report JSON.",
     )
     parser.add_argument(
         "--save-splits-dir",
         default=str(TEAM_A_ROOT / "data" / "splits"),
-        help="Directory to save the reproducible train/dev JSONL split files.",
-    )
-    parser.add_argument(
-        "--skip-judge",
-        action="store_true",
-        help="Skip sandbox Elasticsearch validation during evaluation.",
     )
     args = parser.parse_args()
 
@@ -290,32 +292,47 @@ def main() -> None:
 
     rows = load_jsonl_rows(dataset_path)
     train_rows, dev_rows = split_rows(rows, train_ratio=args.train_ratio, seed=args.seed)
+
+    chroma_client = ChromaClient(dev=settings.dev)
+    ensure_chroma_has_schema(chroma_client)
+    schema_retriever = SchemaRetriever(chroma_client=chroma_client)
+
+    train_rows = enrich_rows_with_schema(train_rows, schema_retriever)
+    dev_rows = enrich_rows_with_schema(dev_rows, schema_retriever)
     trainset = rows_to_examples(train_rows)
+    devset = rows_to_examples(dev_rows)
 
     train_split_path = save_splits_dir / "optimizer_trainset.jsonl"
     dev_split_path = save_splits_dir / "optimizer_devset.jsonl"
     write_jsonl_rows(train_split_path, train_rows)
     write_jsonl_rows(dev_split_path, dev_rows)
 
-    chroma_client = ChromaClient(dev=settings.dev)
-    student = OptimizableNLToQueryDSL(chroma_client=chroma_client)
+    sandbox_client = SandboxESClient(
+        host="http://localhost:9200" if settings.dev else None
+    )
+    judge = JudgeDSPY(sandbox_es_client=sandbox_client)
 
-    teleprompter = dspy.BootstrapFewShot(metric=metric_exact_query_dsl)
-    optimized_program = teleprompter.compile(student=student, trainset=trainset)
+    if args.metric_type == "execution":
+        metric_callable = ExecutionAwareESMetric(sandbox_client=sandbox_client)
+        metric_name = "ExecutionAwareESMetric"
+    else:
+        metric_callable = metric_exact_query_dsl
+        metric_name = "metric_exact_query_dsl"
+
+    student = OptimizableNLToQueryDSL()
+    teleprompter, optimized_program = compile_program(
+        student=student,
+        trainset=trainset,
+        devset=devset,
+        metric_callable=metric_callable,
+        optimizer_type=args.optimizer_type,
+    )
 
     artifact_output_path.parent.mkdir(parents=True, exist_ok=True)
     optimized_program.save(str(artifact_output_path))
 
-    train_summary = evaluate_program(
-        optimized_program,
-        train_rows,
-        run_judge_validation=not args.skip_judge,
-    )
-    dev_summary = evaluate_program(
-        optimized_program,
-        dev_rows,
-        run_judge_validation=not args.skip_judge,
-    )
+    train_summary = evaluate_program(optimized_program, train_rows, judge)
+    dev_summary = evaluate_program(optimized_program, dev_rows, judge)
 
     report = {
         "dataset_path": str(dataset_path),
@@ -327,8 +344,8 @@ def main() -> None:
             "dev": str(dev_split_path),
         },
         "optimizer": {
-            "type": "dspy.BootstrapFewShot",
-            "metric": "metric_exact_query_dsl",
+            "type": teleprompter.__class__.__name__,
+            "metric": metric_name,
             "student_program": "OptimizableNLToQueryDSL",
         },
         "train_summary": train_summary,
@@ -338,6 +355,8 @@ def main() -> None:
     report_output_path.parent.mkdir(parents=True, exist_ok=True)
     with report_output_path.open("w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
+
+    sandbox_client.close()
 
     print(f"Loaded dataset: {dataset_path}")
     print(f"Saved train split: {train_split_path}")

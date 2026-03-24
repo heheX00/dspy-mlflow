@@ -1,0 +1,5189 @@
+{
+  "dataset_path": "C:\\Users\\1e1ta\\Desktop\\Work\\SAF\\tdc_attachment\\DSPY\\hanbin\\dspy-mlflow\\team_a_dspy\\data\\optimizer_fullset.jsonl",
+  "artifact_output": "C:\\Users\\1e1ta\\Desktop\\Work\\SAF\\tdc_attachment\\DSPY\\hanbin\\dspy-mlflow\\team_a_dspy\\optimizers\\artifacts\\optimized_query_generator.json",
+  "train_ratio": 0.8,
+  "seed": 42,
+  "split_files": {
+    "train": "C:\\Users\\1e1ta\\Desktop\\Work\\SAF\\tdc_attachment\\DSPY\\hanbin\\dspy-mlflow\\team_a_dspy\\data\\splits\\optimizer_trainset.jsonl",
+    "dev": "C:\\Users\\1e1ta\\Desktop\\Work\\SAF\\tdc_attachment\\DSPY\\hanbin\\dspy-mlflow\\team_a_dspy\\data\\splits\\optimizer_devset.jsonl"
+  },
+  "optimizer": {
+    "type": "MIPROv2",
+    "metric": "ExecutionAwareESMetric",
+    "student_program": "OptimizableNLToQueryDSL"
+  },
+  "train_summary": {
+    "num_examples": 40,
+    "exact_matches": 1,
+    "exact_match_rate": 0.025,
+    "judge_validation": {
+      "num_judged": 40,
+      "num_valid": 0,
+      "valid_rate": 0.0
+    },
+    "avg_judge_score": 0.616665,
+    "results": [
+      {
+        "index": 1,
+        "nl_query": "What crisis-related news had the highest number of articles yesterday?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme.keyword": "CRISISLEX*"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-1d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "by_crisis_theme": {
+              "terms": {
+                "field": "V2EnhancedThemes.V2Theme.keyword",
+                "size": 20
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme": "*CRISIS*"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-1d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "crisis_themes": {
+              "terms": {
+                "field": "V2EnhancedThemes.V2Theme.keyword",
+                "size": 20,
+                "order": {
+                  "_count": "desc"
+                }
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.7333,
+          "feedback": "Unknown fields referenced: V21Date, V2EnhancedThemes.V2Theme, V2EnhancedThemes.V2Theme.keyword, field, order, size.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2EnhancedThemes.V2Theme",
+              "V2EnhancedThemes.V2Theme.keyword",
+              "field",
+              "order",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "crisis_themes"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.6667,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 2,
+        "nl_query": "What are the most negative news articles about Iran this week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 5,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "IR"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V15Tone.NegativeScore": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V15Tone.NegativeScore",
+            "V15Tone.Tone",
+            "V21Date"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V2EnhancedThemes.V2Theme": "Iran"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V15Tone.NegativeScore": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V15Tone.NegativeScore",
+            "V15Tone.Polarity"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.56,
+          "feedback": "Unknown fields referenced: V15Tone.NegativeScore, V21Date, V2EnhancedThemes.V2Theme. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V15Tone.NegativeScore] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "V15Tone.NegativeScore",
+              "V21Date",
+              "V2EnhancedThemes.V2Theme"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.5,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 3,
+        "nl_query": "Which articles from the past week are sourced from translingual or non-English publishers?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "GkgRecordId.Translingual": true
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V2SrcCmnName.V2SrcCmnName",
+            "V21Date"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "GkgRecordId.Translingual": true
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "GkgRecordId.Translingual"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.62,
+          "feedback": "Unknown fields referenced: GkgRecordId.Translingual, V21Date. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V21Date] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "GkgRecordId.Translingual",
+              "V21Date"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 0.8,
+          "semantic_score": 1.0,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 4,
+        "nl_query": "What countries are mentioned in articles about the Strait of Hormuz this week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V21AllNames.Name": "Strait of Hormuz"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "mentioned_countries": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 20
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V2Locations.FullName": "Strait of Hormuz"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "countries": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 50
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.7333,
+          "feedback": "Unknown fields referenced: V21Date, V2Locations.CountryCode.keyword, V2Locations.FullName, field, size.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2Locations.CountryCode.keyword",
+              "V2Locations.FullName",
+              "field",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "countries"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.6667,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 5,
+        "nl_query": "What countries had the most military-related news coverage last week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2EnhancedThemes.V2Theme.keyword": "MILITARY"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "by_country": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 20
+              },
+              "aggs": {
+                "avg_tone": {
+                  "avg": {
+                    "field": "V15Tone.Tone"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "event.original": "military"
+                  }
+                },
+                {
+                  "range": {
+                    "V2ExtrasXML.PubTimestamp": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "countries_with_military_news": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 50,
+                "order": {
+                  "_count": "desc"
+                }
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.6667,
+          "feedback": "Unknown fields referenced: V2ExtrasXML.PubTimestamp, V2Locations.CountryCode.keyword, event.original, field, order, size.",
+          "details": {
+            "unknown_fields": [
+              "V2ExtrasXML.PubTimestamp",
+              "V2Locations.CountryCode.keyword",
+              "event.original",
+              "field",
+              "order",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "countries_with_military_news"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.3333,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 6,
+        "nl_query": "Which country in the Middle East had the highest average news tone (most positive coverage) last week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2Locations.CountryCode.keyword": [
+                      "IS",
+                      "IZ",
+                      "JO",
+                      "SA",
+                      "AE",
+                      "QA",
+                      "KW",
+                      "OM",
+                      "BH",
+                      "LB",
+                      "SY",
+                      "YM",
+                      "IR",
+                      "TU"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "by_country": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 20
+              },
+              "aggs": {
+                "avg_tone": {
+                  "avg": {
+                    "field": "V15Tone.Tone"
+                  }
+                },
+                "avg_positive_score": {
+                  "avg": {
+                    "field": "V15Tone.PositiveScore"
+                  }
+                },
+                "avg_negative_score": {
+                  "avg": {
+                    "field": "V15Tone.NegativeScore"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2Locations.CountryCode.keyword": [
+                      "SA",
+                      "IR",
+                      "IQ",
+                      "IL",
+                      "JO",
+                      "KW",
+                      "LB",
+                      "OM",
+                      "PS",
+                      "QA",
+                      "AE",
+                      "YE",
+                      "EG",
+                      "SY",
+                      "TR"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "countries\": {\"terms": {
+              "field": "V2Locations.CountryCode.keyword",
+              "size": 20,
+              "order": {
+                "avg_tone": "desc"
+              }
+            }
+          },
+          "aggs\": {\"avg_tone": {
+            "avg": {
+              "field": "V15Tone.Tone"
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.5457,
+          "feedback": "Unknown fields referenced: V15Tone.Tone, V21Date, V2Locations.CountryCode.keyword. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'parsing_exception', 'Expected [START_OBJECT] under [field], but got a [VALUE_STRING] in [countries\": {\"terms]')",
+          "details": {
+            "unknown_fields": [
+              "V15Tone.Tone",
+              "V21Date",
+              "V2Locations.CountryCode.keyword"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.4286,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 7,
+        "nl_query": "How many articles mention armed conflict in the last 48 hours, broken down by country?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2EnhancedThemes.V2Theme.keyword": "ARMEDCONFLICT"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-48h",
+                      "lte": "now"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "by_country": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 30
+              },
+              "aggs": {}
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme": "*ARMED_CONFLICT*"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-2d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "articles_by_country": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 200
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.0,
+          "feedback": "Unsafe query: size=200 exceeds SAFE_MAX_SIZE=100.",
+          "details": {
+            "error": "unsafe_query"
+          },
+          "safety_score": 0.0,
+          "schema_score": 0.0,
+          "execution_score": 0.0,
+          "task_shape_score": 0.0,
+          "semantic_score": 0.0,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 8,
+        "nl_query": "Which countries had the most power outage news this week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2EnhancedThemes.V2Theme.keyword": "MANMADE_DISASTER_RESTORE_POWER"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "by_country": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 20
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "event.original": "power outage"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "countries_with_power_outages": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 50,
+                "order": {
+                  "_count": "desc"
+                }
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.7143,
+          "feedback": "Unknown fields referenced: V21Date, V2Locations.CountryCode.keyword, event.original, field, order, size.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2Locations.CountryCode.keyword",
+              "event.original",
+              "field",
+              "order",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "countries_with_power_outages"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.5714,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 9,
+        "nl_query": "Which is the safest country in the Middle East to travel to last week and provide figures?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2Locations.CountryCode.keyword": [
+                      "IS",
+                      "IZ",
+                      "JO",
+                      "SA",
+                      "AE",
+                      "QA",
+                      "KW",
+                      "OM",
+                      "BH",
+                      "LB",
+                      "SY",
+                      "YM",
+                      "IR",
+                      "TU"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "by_country": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 20
+              },
+              "aggs": {
+                "avg_tone": {
+                  "avg": {
+                    "field": "V15Tone.Tone"
+                  }
+                },
+                "avg_negative_score": {
+                  "avg": {
+                    "field": "V15Tone.NegativeScore"
+                  }
+                },
+                "avg_positive_score": {
+                  "avg": {
+                    "field": "V15Tone.PositiveScore"
+                  }
+                },
+                "conflict_articles": {
+                  "filter": {
+                    "terms": {
+                      "V2EnhancedThemes.V2Theme": [
+                        "ARMEDCONFLICT",
+                        "CRISISLEX_CRISISLEXREC",
+                        "MILITARY"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2Locations.CountryCode.keyword": [
+                      "SA",
+                      "AE",
+                      "QA",
+                      "KW",
+                      "BH",
+                      "OM",
+                      "JO",
+                      "LB",
+                      "IQ",
+                      "SY",
+                      "PS",
+                      "IL"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "countries": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 20
+              },
+              "aggs": {
+                "article_count": {
+                  "value_count": {
+                    "field": "V2DocId"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.6889,
+          "feedback": "Unknown fields referenced: V21Date, V2DocId, V2Locations.CountryCode.keyword, field, size.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2DocId",
+              "V2Locations.CountryCode.keyword",
+              "field",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "countries"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.4444,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 10,
+        "nl_query": "Show me articles about Turkey published this week with negative tone.",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "TU"
+                  }
+                },
+                {
+                  "range": {
+                    "V15Tone.Tone": {
+                      "lte": -3
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V15Tone.Tone": {
+                "order": "asc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V15Tone.Tone",
+            "V21Date"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "TR"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "V15Tone.NegativeScore": {
+                      "gte": 0.1
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V15Tone.NegativeScore",
+            "V15Tone.Tone"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.56,
+          "feedback": "Unknown fields referenced: V15Tone.NegativeScore, V21Date, V2Locations.CountryCode.keyword. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V21Date] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "V15Tone.NegativeScore",
+              "V21Date",
+              "V2Locations.CountryCode.keyword"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.5,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 11,
+        "nl_query": "What is the average sentiment of news articles about Qatar this week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "QA"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "avg_tone": {
+              "avg": {
+                "field": "V15Tone.Tone"
+              }
+            },
+            "avg_positive": {
+              "avg": {
+                "field": "V15Tone.PositiveScore"
+              }
+            },
+            "avg_negative": {
+              "avg": {
+                "field": "V15Tone.NegativeScore"
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "QA"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "avg_sentiment": {
+              "avg": {
+                "field": "V15Tone.Polarity"
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.6667,
+          "feedback": "Unknown fields referenced: V15Tone.Polarity, V21Date, V2Locations.CountryCode.keyword.",
+          "details": {
+            "unknown_fields": [
+              "V15Tone.Polarity",
+              "V21Date",
+              "V2Locations.CountryCode.keyword"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "avg_sentiment"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.3333,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 12,
+        "nl_query": "What are the most discussed economic policy topics globally this week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme.keyword": "EPU_*"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "top_epu_themes": {
+              "terms": {
+                "field": "V2EnhancedThemes.V2Theme.keyword",
+                "size": 20
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme": "*ECON*"
+                  }
+                },
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme": "*TAX*"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "top_economic_topics": {
+              "terms": {
+                "field": "V2EnhancedThemes.V2Theme.keyword",
+                "size": 20
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.76,
+          "feedback": "Unknown fields referenced: V21Date, V2EnhancedThemes.V2Theme, V2EnhancedThemes.V2Theme.keyword, field, size.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2EnhancedThemes.V2Theme",
+              "V2EnhancedThemes.V2Theme.keyword",
+              "field",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "top_economic_topics"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.8,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 13,
+        "nl_query": "Find news articles about kidnappings in Africa published this week.",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2EnhancedThemes.V2Theme.keyword": "KIDNAP"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                {
+                  "geo_bounding_box": {
+                    "location": {
+                      "top_left": {
+                        "lat": 37.5,
+                        "lon": -17.5
+                      },
+                      "bottom_right": {
+                        "lat": -35.0,
+                        "lon": 51.5
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName",
+            "V15Tone.Tone"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V2ExtrasXML.Title": "kidnapping"
+                  }
+                },
+                {
+                  "terms": {
+                    "V2Locations.CountryCode.keyword": [
+                      "NG",
+                      "KE",
+                      "ZA",
+                      "EG",
+                      "MA",
+                      "TZ",
+                      "UG",
+                      "GH",
+                      "CM",
+                      "SN",
+                      "CI",
+                      "ET",
+                      "MZ",
+                      "ZW",
+                      "ZM",
+                      "RW",
+                      "BW",
+                      "SD",
+                      "DZ",
+                      "TN",
+                      "LY",
+                      "MR",
+                      "ML",
+                      "BF",
+                      "NE",
+                      "TD",
+                      "CD",
+                      "AO",
+                      "MW",
+                      "MG",
+                      "MU",
+                      "SC",
+                      "KM",
+                      "SS",
+                      "ER",
+                      "DJ",
+                      "SO",
+                      "GW",
+                      "GM",
+                      "GN",
+                      "SL",
+                      "LR",
+                      "BJ"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName",
+            "V2Locations.CountryCode"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.47,
+          "feedback": "Unknown fields referenced: V21Date, V2ExtrasXML.Title, V2Locations.CountryCode.keyword. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V21Date] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2ExtrasXML.Title",
+              "V2Locations.CountryCode.keyword"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 0.8,
+          "semantic_score": 0.25,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 14,
+        "nl_query": "What is the overall sentiment trend of news about Ukraine over the past 7 days?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "UP"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "sentiment_over_time": {
+              "date_histogram": {
+                "field": "V21Date",
+                "calendar_interval": "day"
+              },
+              "aggs": {
+                "avg_tone": {
+                  "avg": {
+                    "field": "V15Tone.Tone"
+                  }
+                },
+                "avg_negative": {
+                  "avg": {
+                    "field": "V15Tone.NegativeScore"
+                  }
+                },
+                "avg_positive": {
+                  "avg": {
+                    "field": "V15Tone.PositiveScore"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "UA"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "sentiment_over_time": {
+              "date_histogram": {
+                "field": "V2ExtrasXML.PubTimestamp",
+                "calendar_interval": "day"
+              },
+              "aggs": {
+                "avg_negative": {
+                  "avg": {
+                    "field": "V15Tone.NegativeScore"
+                  }
+                },
+                "avg_positive": {
+                  "avg": {
+                    "field": "V15Tone.PositiveScore"
+                  }
+                },
+                "avg_polarity": {
+                  "avg": {
+                    "field": "V15Tone.Polarity"
+                  }
+                },
+                "avg_tone": {
+                  "avg": {
+                    "field": "V15Tone.Tone"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.7429,
+          "feedback": "Unknown fields referenced: V15Tone.NegativeScore, V15Tone.Polarity, V15Tone.PositiveScore, V15Tone.Tone, V21Date, V2ExtrasXML.PubTimestamp, V2Locations.CountryCode.keyword.",
+          "details": {
+            "unknown_fields": [
+              "V15Tone.NegativeScore",
+              "V15Tone.Polarity",
+              "V15Tone.PositiveScore",
+              "V15Tone.Tone",
+              "V21Date",
+              "V2ExtrasXML.PubTimestamp",
+              "V2Locations.CountryCode.keyword"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "sentiment_over_time"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.7143,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 15,
+        "nl_query": "Which articles from this week include social media video content from YouTube?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "wildcard": {
+                    "V21SocVideo.V21SocVideo": "*youtube.com*"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21SocVideo.V21SocVideo",
+            "V21Date"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V21SocVideo.V21SocVideo": "youtube"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V21SocVideo.V21SocVideo"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.8,
+          "feedback": "Unknown fields referenced: V21Date, V21SocVideo.V21SocVideo.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V21SocVideo.V21SocVideo"
+            ],
+            "hits_total": 0,
+            "aggregation_names": []
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 1.0,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 16,
+        "nl_query": "Show me articles about education in India from the last 5 days.",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "IN"
+                  }
+                },
+                {
+                  "term": {
+                    "V2EnhancedThemes.V2Theme.keyword": "EDUCATION"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-5d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2SrcCmnName.V2SrcCmnName"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "IN"
+                  }
+                },
+                {
+                  "match": {
+                    "V2EnhancedThemes.V2Theme": "education"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-5d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.52,
+          "feedback": "Unknown fields referenced: V21Date, V2EnhancedThemes.V2Theme, V2Locations.CountryCode.keyword. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V21Date] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2EnhancedThemes.V2Theme",
+              "V2Locations.CountryCode.keyword"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 0.8,
+          "semantic_score": 0.5,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 17,
+        "nl_query": "Which natural disasters were reported globally in the last week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme.keyword": "NATURAL_DISASTER*"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName",
+            "V2EnhancedThemes.V2Theme"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme": "*DISASTER*"
+                  }
+                },
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme": "*EARTHQUAKE*"
+                  }
+                },
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme": "*FLOOD*"
+                  }
+                },
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme": "*HURRICANE*"
+                  }
+                },
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme": "*WILDFIRE*"
+                  }
+                },
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme": "*TSUNAMI*"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "natural_disasters": {
+              "terms": {
+                "field": "V2EnhancedThemes.V2Theme.keyword",
+                "size": 50
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.56,
+          "feedback": "Unknown fields referenced: V21Date, V2EnhancedThemes.V2Theme, V2EnhancedThemes.V2Theme.keyword, field, size.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2EnhancedThemes.V2Theme",
+              "V2EnhancedThemes.V2Theme.keyword",
+              "field",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "natural_disasters"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 0.4,
+          "semantic_score": 0.4,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 18,
+        "nl_query": "List the most frequently cited authors in Middle East news this week.",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2Locations.CountryCode.keyword": [
+                      "IS",
+                      "IZ",
+                      "JO",
+                      "SA",
+                      "AE",
+                      "QA",
+                      "LB",
+                      "SY",
+                      "IR"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "top_authors": {
+              "terms": {
+                "field": "V2ExtrasXML.Author.keyword",
+                "size": 15
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V21Quotations.Quote": "Middle East"
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "top_authors": {
+              "terms": {
+                "field": "V2ExtrasXML.Author.keyword",
+                "size": 20
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.6857,
+          "feedback": "Unknown fields referenced: @timestamp, V21Quotations.Quote, V2ExtrasXML.Author.keyword, field, size.",
+          "details": {
+            "unknown_fields": [
+              "@timestamp",
+              "V21Quotations.Quote",
+              "V2ExtrasXML.Author.keyword",
+              "field",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "top_authors"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.4286,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 19,
+        "nl_query": "What is the total article count per country in Africa this week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                {
+                  "geo_bounding_box": {
+                    "location": {
+                      "top_left": {
+                        "lat": 37.5,
+                        "lon": -17.5
+                      },
+                      "bottom_right": {
+                        "lat": -35.0,
+                        "lon": 51.5
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "by_country": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 60
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2Locations.CountryCode.keyword": [
+                      "DZ",
+                      "AO",
+                      "BJ",
+                      "BW",
+                      "BF",
+                      "BI",
+                      "CM",
+                      "CV",
+                      "CF",
+                      "TD",
+                      "KM",
+                      "CD",
+                      "DJ",
+                      "EG",
+                      "GQ",
+                      "ER",
+                      "SZ",
+                      "ET",
+                      "GA",
+                      "GM",
+                      "GH",
+                      "GN",
+                      "GW",
+                      "KE",
+                      "LS",
+                      "LR",
+                      "LY",
+                      "MG",
+                      "MW",
+                      "ML",
+                      "MR",
+                      "MU",
+                      "MA",
+                      "MZ",
+                      "NA",
+                      "NE",
+                      "NG",
+                      "RW",
+                      "ST",
+                      "SN",
+                      "SC",
+                      "SL",
+                      "SO",
+                      "ZA",
+                      "SS",
+                      "SD",
+                      "SZ",
+                      "TZ",
+                      "TG",
+                      "TN",
+                      "UG",
+                      "ZM",
+                      "ZW"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "articles_per_country": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 60
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.8,
+          "feedback": "Unknown fields referenced: V21Date, V2Locations.CountryCode.keyword, field, size.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2Locations.CountryCode.keyword",
+              "field",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "articles_per_country"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 1.0,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 20,
+        "nl_query": "What were the most positive stories about Saudi Arabia last week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 5,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "SA"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "V15Tone.PositiveScore": {
+                      "gte": 5
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V15Tone.PositiveScore": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V15Tone.PositiveScore",
+            "V21Date"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "SA"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V15Tone.PositiveScore": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V15Tone.PositiveScore"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.66,
+          "feedback": "Unknown fields referenced: V15Tone.PositiveScore, V21Date, V2Locations.CountryCode.keyword. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V15Tone.PositiveScore] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "V15Tone.PositiveScore",
+              "V21Date",
+              "V2Locations.CountryCode.keyword"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 1.0,
+          "semantic_score": 1.0,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 21,
+        "nl_query": "What articles were published about food security or agriculture globally this week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2EnhancedThemes.V2Theme.keyword": [
+                      "WB_2670_JOBS",
+                      "WB_470_EDUCATION",
+                      "TAX_ECON_PRICE"
+                    ]
+                  }
+                },
+                {
+                  "match": {
+                    "V2ExtrasXML.Title": "food"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "bool": {
+                    "should": [
+                      {
+                        "match": {
+                          "V2ExtrasXML.Title": "food security"
+                        }
+                      },
+                      {
+                        "match": {
+                          "V2ExtrasXML.Title": "agriculture"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.7333,
+          "feedback": "Unknown fields referenced: V21Date, V2ExtrasXML.Title.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2ExtrasXML.Title"
+            ],
+            "hits_total": 0,
+            "aggregation_names": []
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.6667,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 22,
+        "nl_query": "What are the top 10 most action-oriented (high activity density) articles this week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "range": {
+              "V21Date": {
+                "gte": "now-7d/d",
+                "lte": "now/d"
+              }
+            }
+          },
+          "sort": [
+            {
+              "V15Tone.ActivityRefDensity": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V15Tone.ActivityRefDensity",
+            "V21Date",
+            "V2Locations.FullName"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "range": {
+                    "@timestamp": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V15Tone.ActivityRefDensity": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "@timestamp",
+            "V15Tone.ActivityRefDensity"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.5267,
+          "feedback": "Unknown fields referenced: @timestamp, V15Tone.ActivityRefDensity. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V15Tone.ActivityRefDensity] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "@timestamp",
+              "V15Tone.ActivityRefDensity"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.3333,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 23,
+        "nl_query": "What are the most-covered World Bank development themes in news this week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme.keyword": "WB_*"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "top_wb_themes": {
+              "terms": {
+                "field": "V2EnhancedThemes.V2Theme.keyword",
+                "size": 25
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme": "WB_*"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "top_themes": {
+              "terms": {
+                "field": "V2EnhancedThemes.V2Theme.keyword",
+                "size": 20
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.76,
+          "feedback": "Unknown fields referenced: V21Date, V2EnhancedThemes.V2Theme, V2EnhancedThemes.V2Theme.keyword, field, size.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2EnhancedThemes.V2Theme",
+              "V2EnhancedThemes.V2Theme.keyword",
+              "field",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "top_themes"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.8,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 24,
+        "nl_query": "How many articles per day were published about the Iran war in the last week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "IR"
+                  }
+                },
+                {
+                  "terms": {
+                    "V2EnhancedThemes.V2Theme.keyword": [
+                      "ARMEDCONFLICT",
+                      "MILITARY",
+                      "EPU_CATS_NATIONAL_SECURITY"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "articles_per_day": {
+              "date_histogram": {
+                "field": "V21Date",
+                "calendar_interval": "day"
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V2EnhancedThemes.V2Theme": "Iran war"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "articles_per_day": {
+              "date_histogram": {
+                "field": "V21Date",
+                "calendar_interval": "day"
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.65,
+          "feedback": "Unknown fields referenced: V21Date, V2EnhancedThemes.V2Theme.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2EnhancedThemes.V2Theme"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "articles_per_day"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.25,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 25,
+        "nl_query": "Which locations within 500km of Baghdad were covered in news this week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                {
+                  "geo_distance": {
+                    "distance": "500km",
+                    "location": {
+                      "lat": 33.3386,
+                      "lon": 44.3939
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V2Locations.FullName",
+            "V21Date"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "geo_distance": {
+                    "distance": "500km",
+                    "location": {
+                      "lat": 33.3152,
+                      "lon": 44.3661
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "locations": {
+              "terms": {
+                "field": "V2Locations.FullName.keyword",
+                "size": 50
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.57,
+          "feedback": "Unknown fields referenced: V21Date, V2Locations.FullName.keyword, field, size.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2Locations.FullName.keyword",
+              "field",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "locations"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 0.6,
+          "semantic_score": 0.25,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 26,
+        "nl_query": "Show me the most recent articles about Israel and Iran together in the same story.",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2Locations.CountryCode.keyword": [
+                      "IS",
+                      "IR"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ],
+              "minimum_should_match": 1,
+              "should": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "IS"
+                  }
+                },
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "IR"
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.CountryCode.keyword"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "IL"
+                  }
+                },
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "IR"
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.62,
+          "feedback": "Unknown fields referenced: V21Date, V2Locations.CountryCode.keyword. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V21Date] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2Locations.CountryCode.keyword"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 0.8,
+          "semantic_score": 1.0,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 27,
+        "nl_query": "What are the most recent articles about drone attacks?",
+        "exact_match": true,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2EnhancedThemes.V2Theme.keyword": "DRONES"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2EnhancedThemes.V2Theme.keyword": "DRONES"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.66,
+          "feedback": "Unknown fields referenced: V21Date, V2EnhancedThemes.V2Theme.keyword. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V21Date] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2EnhancedThemes.V2Theme.keyword"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 1.0,
+          "semantic_score": 1.0,
+          "exact_match_score": 1.0
+        }
+      },
+      {
+        "index": 28,
+        "nl_query": "Which articles mention both the White House and Iran this week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V2Orgs.V1Org": "White House"
+                  }
+                },
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "IR"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2SrcCmnName.V2SrcCmnName"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V2Locations.FullName": "White House"
+                  }
+                },
+                {
+                  "match": {
+                    "V2Locations.FullName": "Iran"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.47,
+          "feedback": "Unknown fields referenced: V21Date, V2Locations.FullName. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V21Date] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2Locations.FullName"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 0.8,
+          "semantic_score": 0.25,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 29,
+        "nl_query": "Which organizations are most mentioned in articles about climate change this week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2EnhancedThemes.V2Theme.keyword": [
+                      "ENV_CLIMATECHANGE",
+                      "ENV_CLIMATECHANGE_POLICY"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "top_orgs": {
+              "terms": {
+                "field": "V2Orgs.V1Org.keyword",
+                "size": 15
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V2EnhancedThemes.V2Theme": "climate change"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "top_organizations": {
+              "terms": {
+                "field": "V2Orgs.V1Org",
+                "size": 20
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.6857,
+          "feedback": "Unknown fields referenced: V21Date, V2EnhancedThemes.V2Theme, V2Orgs.V1Org, field, size.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2EnhancedThemes.V2Theme",
+              "V2Orgs.V1Org",
+              "field",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "top_organizations"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.4286,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 30,
+        "nl_query": "Which articles in the past week discuss crimes or criminal justice?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2EnhancedThemes.V2Theme.keyword": [
+                      "WB_1014_CRIMINAL_JUSTICE",
+                      "TRIAL",
+                      "WB_840_JUSTICE"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "event.original": "crime criminal justice"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2DocId",
+            "V21Date",
+            "V15Tone.Polarity",
+            "event.original"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.4867,
+          "feedback": "Unknown fields referenced: V21Date, event.original. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V21Date] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "event.original"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 0.8,
+          "semantic_score": 0.3333,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 31,
+        "nl_query": "Find articles that mention both military and oil themes in the Gulf this week.",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2EnhancedThemes.V2Theme.keyword": "MILITARY"
+                  }
+                },
+                {
+                  "term": {
+                    "V2EnhancedThemes.V2Theme.keyword": "ENV_OIL"
+                  }
+                },
+                {
+                  "terms": {
+                    "V2Locations.CountryCode.keyword": [
+                      "SA",
+                      "AE",
+                      "QA",
+                      "KW",
+                      "OM",
+                      "BH",
+                      "IR",
+                      "IZ"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName",
+            "V15Tone.Tone"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme": "*military*"
+                  }
+                },
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme": "*oil*"
+                  }
+                },
+                {
+                  "match": {
+                    "V2Locations.FullName": "Gulf"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.64,
+          "feedback": "Unknown fields referenced: V21Date, V2EnhancedThemes.V2Theme, V2Locations.FullName.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2EnhancedThemes.V2Theme",
+              "V2Locations.FullName"
+            ],
+            "hits_total": 0,
+            "aggregation_names": []
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.2,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 32,
+        "nl_query": "Find the most neutral coverage (tone closest to 0) about the UK this week.",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "UK"
+                  }
+                },
+                {
+                  "range": {
+                    "V15Tone.Tone": {
+                      "gte": -1,
+                      "lte": 1
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V15Tone.Tone",
+            "V21Date",
+            "V2SrcCmnName.V2SrcCmnName"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "GB"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V15Tone.Polarity": {
+                "order": "asc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V15Tone.Polarity",
+            "V15Tone.Tone"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.52,
+          "feedback": "Unknown fields referenced: V15Tone.Polarity, V21Date, V2Locations.CountryCode.keyword. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V15Tone.Polarity] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "V15Tone.Polarity",
+              "V21Date",
+              "V2Locations.CountryCode.keyword"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 0.8,
+          "semantic_score": 0.5,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 33,
+        "nl_query": "What health-related news has come out of India this week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "IN"
+                  }
+                },
+                {
+                  "terms": {
+                    "V2EnhancedThemes.V2Theme.keyword": [
+                      "GENERAL_HEALTH",
+                      "MEDICAL",
+                      "WB_1406_DISEASES"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2SrcCmnName.V2SrcCmnName",
+            "V15Tone.Tone"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "IN"
+                  }
+                },
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme": "*HEALTH*"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName",
+            "V2EnhancedThemes.V2Theme"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.52,
+          "feedback": "Unknown fields referenced: V21Date, V2EnhancedThemes.V2Theme, V2Locations.CountryCode.keyword. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V21Date] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2EnhancedThemes.V2Theme",
+              "V2Locations.CountryCode.keyword"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 0.8,
+          "semantic_score": 0.5,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 34,
+        "nl_query": "Find all articles about oil and energy from the Gulf region in the last week.",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2Locations.CountryCode.keyword": [
+                      "SA",
+                      "AE",
+                      "QA",
+                      "KW",
+                      "OM",
+                      "BH",
+                      "IR",
+                      "IZ"
+                    ]
+                  }
+                },
+                {
+                  "terms": {
+                    "V2EnhancedThemes.V2Theme.keyword": [
+                      "ENV_OIL",
+                      "WB_545_NATIONAL_OIL_COMPANIES",
+                      "EPU_CATS_ENERGY_UTILITIES"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName",
+            "V15Tone.Tone"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V2ExtrasXML.Title": "oil energy"
+                  }
+                },
+                {
+                  "terms": {
+                    "V2Locations.CountryCode.keyword": [
+                      "KW",
+                      "SA",
+                      "AE",
+                      "QA",
+                      "BH",
+                      "OM",
+                      "IR",
+                      "IQ"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.52,
+          "feedback": "Unknown fields referenced: V21Date, V2ExtrasXML.Title, V2Locations.CountryCode.keyword. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V21Date] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2ExtrasXML.Title",
+              "V2Locations.CountryCode.keyword"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 0.8,
+          "semantic_score": 0.5,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 35,
+        "nl_query": "What are the latest news headlines from BBC in the past day?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2SrcCmnName.V2SrcCmnName.keyword": "bbc.com"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-1d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V2ExtrasXML.Title": "BBC"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-1d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.5267,
+          "feedback": "Unknown fields referenced: V21Date, V2ExtrasXML.Title. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V21Date] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2ExtrasXML.Title"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.3333,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 36,
+        "nl_query": "Show me news about the European Union and trade published this week.",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V2Orgs.V1Org": "European Union"
+                  }
+                },
+                {
+                  "terms": {
+                    "V2EnhancedThemes.V2Theme.keyword": [
+                      "EPU_POLICY_TRADE",
+                      "TAX_ECON_PRICE",
+                      "WB_135_TRANSPORT"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2SrcCmnName.V2SrcCmnName"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V2ExtrasXML.Title": "European Union"
+                  }
+                },
+                {
+                  "match": {
+                    "V2ExtrasXML.Title": "trade"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.47,
+          "feedback": "Unknown fields referenced: V21Date, V2ExtrasXML.Title. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V21Date] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2ExtrasXML.Title"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 0.8,
+          "semantic_score": 0.25,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 37,
+        "nl_query": "How many news articles mentioned Israel in the last 24 hours?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "IS"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-24h",
+                      "lte": "now"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "track_total_hits": true,
+          "size": 0
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "IL"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-1d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.8,
+          "feedback": "Unknown fields referenced: V21Date, V2Locations.CountryCode.keyword.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2Locations.CountryCode.keyword"
+            ],
+            "hits_total": 0,
+            "aggregation_names": []
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 1.0,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 38,
+        "nl_query": "Which countries in Southeast Asia had the most news coverage yesterday?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2Locations.CountryCode.keyword": [
+                      "TH",
+                      "MY",
+                      "SG",
+                      "ID",
+                      "PH",
+                      "VN",
+                      "MM",
+                      "KH",
+                      "LA",
+                      "BX"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-1d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "by_country": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 20
+              },
+              "aggs": {}
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2Locations.CountryCode.keyword": [
+                      "BN",
+                      "KH",
+                      "ID",
+                      "LA",
+                      "MY",
+                      "MM",
+                      "PH",
+                      "SG",
+                      "TH",
+                      "TL",
+                      "VN"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-1d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "countries_by_coverage": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 20,
+                "order": {
+                  "_count": "desc"
+                }
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.76,
+          "feedback": "Unknown fields referenced: V21Date, V2Locations.CountryCode.keyword, field, order, size.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2Locations.CountryCode.keyword",
+              "field",
+              "order",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "countries_by_coverage"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.8,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 39,
+        "nl_query": "What are the most active news sources covering the US political situation today?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "US"
+                  }
+                },
+                {
+                  "terms": {
+                    "V2EnhancedThemes.V2Theme.keyword": [
+                      "GENERAL_GOVERNMENT",
+                      "EPU_POLICY_POLITICAL",
+                      "DEMOCRACY"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-1d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "top_sources": {
+              "terms": {
+                "field": "V2SrcCmnName.V2SrcCmnName.keyword",
+                "size": 15
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "event.original": "US political"
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "gte": "now/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "active_sources": {
+              "terms": {
+                "field": "event.original.keyword",
+                "size": 20
+              },
+              "aggs": {
+                "avg_activity": {
+                  "avg": {
+                    "field": "V15Tone.ActivityRefDensity"
+                  }
+                }
+              }
+            }
+          },
+          "sort": [
+            {
+              "V15Tone.ActivityRefDensity": {
+                "order": "desc"
+              }
+            }
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.46,
+          "feedback": "Unknown fields referenced: @timestamp, V15Tone.ActivityRefDensity, event.original, event.original.keyword, field, size. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V15Tone.ActivityRefDensity] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "@timestamp",
+              "V15Tone.ActivityRefDensity",
+              "event.original",
+              "event.original.keyword",
+              "field",
+              "size"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 0.8,
+          "semantic_score": 0.2,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 40,
+        "nl_query": "Which UAE cities were mentioned most in news articles in the last week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "AE"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "top_locations": {
+              "terms": {
+                "field": "V2Locations.FullName.keyword",
+                "size": 20
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "AE"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "uae_cities": {
+              "terms": {
+                "field": "V2Locations.FullName.keyword",
+                "size": 50
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.8,
+          "feedback": "Unknown fields referenced: V21Date, V2Locations.CountryCode.keyword, V2Locations.FullName.keyword, field, size.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2Locations.CountryCode.keyword",
+              "V2Locations.FullName.keyword",
+              "field",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "uae_cities"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 1.0,
+          "exact_match_score": 0.0
+        }
+      }
+    ]
+  },
+  "dev_summary": {
+    "num_examples": 10,
+    "exact_matches": 0,
+    "exact_match_rate": 0.0,
+    "judge_validation": {
+      "num_judged": 10,
+      "num_valid": 0,
+      "valid_rate": 0.0
+    },
+    "avg_judge_score": 0.7071,
+    "results": [
+      {
+        "index": 1,
+        "nl_query": "Show me articles about missing or trapped people from any crisis event this week.",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2EnhancedThemes.V2Theme.keyword": "CRISISLEX_T08_MISSINGFOUNDTRAPPEDPEOPLE"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName",
+            "V15Tone.NegativeScore"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V2ExtrasXML.Title": "missing trapped crisis"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.5267,
+          "feedback": "Unknown fields referenced: V21Date, V2ExtrasXML.Title. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V21Date] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2ExtrasXML.Title"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.3333,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 2,
+        "nl_query": "What is the distribution of article sentiment for Lebanon over the last month?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "LB"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-30d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "sentiment_histogram": {
+              "histogram": {
+                "field": "V15Tone.Tone",
+                "interval": 2
+              }
+            },
+            "avg_tone": {
+              "avg": {
+                "field": "V15Tone.Tone"
+              }
+            },
+            "min_tone": {
+              "min": {
+                "field": "V15Tone.Tone"
+              }
+            },
+            "max_tone": {
+              "max": {
+                "field": "V15Tone.Tone"
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "LB"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-30d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "sentiment_distribution": {
+              "histogram": {
+                "field": "V15Tone.Polarity",
+                "interval": 1,
+                "min_doc_count": 0
+              }
+            },
+            "sentiment_stats": {
+              "stats": {
+                "field": "V15Tone.Polarity"
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.7,
+          "feedback": "Unknown fields referenced: V15Tone.Polarity, V21Date, V2Locations.CountryCode.keyword.",
+          "details": {
+            "unknown_fields": [
+              "V15Tone.Polarity",
+              "V21Date",
+              "V2Locations.CountryCode.keyword"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "sentiment_stats",
+              "sentiment_distribution"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.5,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 3,
+        "nl_query": "How many articles published this week contain quotes from politicians?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "exists": {
+                    "field": "V21Quotations.Quote"
+                  }
+                },
+                {
+                  "terms": {
+                    "V2EnhancedThemes.V2Theme.keyword": [
+                      "GENERAL_GOVERNMENT",
+                      "EPU_POLICY_POLITICAL",
+                      "DEMOCRACY"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "track_total_hits": true
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "exists": {
+                    "field": "V21Quotations.Quote"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.75,
+          "feedback": "Unknown fields referenced: V21Date, V21Quotations.Quote, field.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V21Quotations.Quote",
+              "field"
+            ],
+            "hits_total": 0,
+            "aggregation_names": []
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.75,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 4,
+        "nl_query": "Show me articles mentioning Donald Trump in the last 3 days.",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V2Persons.V1Person": "Donald Trump"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-3d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2SrcCmnName.V2SrcCmnName",
+            "V15Tone.Tone"
+          ]
+        },
+        "predicted_query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V2Persons.V1Person": "Donald Trump"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-3d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName",
+            "V15Tone.NegativeScore"
+          ]
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.62,
+          "feedback": "Unknown fields referenced: V21Date, V2Persons.V1Person. Elasticsearch search failed: BadRequestError: BadRequestError(400, 'search_phase_execution_exception', 'No mapping found for [V21Date] in order to sort on')",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2Persons.V1Person"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 0.3,
+          "task_shape_score": 0.8,
+          "semantic_score": 1.0,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 5,
+        "nl_query": "Which news sources are reporting the most on the Middle East conflict?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2EnhancedThemes.V2Theme.keyword": [
+                      "ARMEDCONFLICT",
+                      "CRISISLEX_CRISISLEXREC"
+                    ]
+                  }
+                },
+                {
+                  "terms": {
+                    "V2Locations.CountryCode.keyword": [
+                      "IS",
+                      "IZ",
+                      "LB",
+                      "SY",
+                      "IR",
+                      "YM"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "top_sources": {
+              "terms": {
+                "field": "V2SrcCmnName.V2SrcCmnName.keyword",
+                "size": 15
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme": "*MIDDLE_EAST*"
+                  }
+                },
+                {
+                  "wildcard": {
+                    "V2EnhancedThemes.V2Theme": "*CONFLICT*"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "reporting_countries": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 50
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.7143,
+          "feedback": "Unknown fields referenced: V21Date, V2EnhancedThemes.V2Theme, V2Locations.CountryCode.keyword, field, size.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2EnhancedThemes.V2Theme",
+              "V2Locations.CountryCode.keyword",
+              "field",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "reporting_countries"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.5714,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 6,
+        "nl_query": "How many articles in the past week had a polarity score above 10 (very positive)?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "range": {
+                    "V15Tone.Polarity": {
+                      "gte": 10
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "track_total_hits": true,
+          "aggs": {
+            "by_country": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 15
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "V15Tone.Polarity": {
+                      "gt": 10
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "article_count": {
+              "value_count": {
+                "field": "V2DocId"
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.6667,
+          "feedback": "Unknown fields referenced: V15Tone.Polarity, V21Date, V2DocId.",
+          "details": {
+            "unknown_fields": [
+              "V15Tone.Polarity",
+              "V21Date",
+              "V2DocId"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "article_count"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.3333,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 7,
+        "nl_query": "Which people are most frequently mentioned in news articles about the Middle East this week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2Locations.CountryCode.keyword": [
+                      "IS",
+                      "IZ",
+                      "JO",
+                      "SA",
+                      "AE",
+                      "QA",
+                      "LB",
+                      "SY",
+                      "IR"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "top_persons": {
+              "terms": {
+                "field": "V2Persons.V1Person.keyword",
+                "size": 15
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2Locations.CountryCode.keyword": [
+                      "IR",
+                      "SA",
+                      "AE",
+                      "IQ",
+                      "IL",
+                      "JO",
+                      "KW",
+                      "QA",
+                      "BH",
+                      "OM",
+                      "YE",
+                      "EG",
+                      "SY",
+                      "LB",
+                      "PS",
+                      "TR"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "top_people": {
+              "terms": {
+                "field": "V2Persons.V1Person.keyword",
+                "size": 20
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.8,
+          "feedback": "Unknown fields referenced: V21Date, V2Locations.CountryCode.keyword, V2Persons.V1Person.keyword, field, size.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2Locations.CountryCode.keyword",
+              "V2Persons.V1Person.keyword",
+              "field",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "top_people"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 1.0,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 8,
+        "nl_query": "How many articles per source mentioned Syria in the past week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "SY"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "by_source": {
+              "terms": {
+                "field": "V2SrcCmnName.V2SrcCmnName.keyword",
+                "size": 20
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "SY"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "articles_per_source": {
+              "terms": {
+                "field": "V2DocId",
+                "size": 50
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.7333,
+          "feedback": "Unknown fields referenced: V21Date, V2DocId, V2Locations.CountryCode.keyword, field, size.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2DocId",
+              "V2Locations.CountryCode.keyword",
+              "field",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "articles_per_source"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.6667,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 9,
+        "nl_query": "What are the most covered news topics in the Middle East this week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2Locations.CountryCode.keyword": [
+                      "IS",
+                      "IZ",
+                      "JO",
+                      "SA",
+                      "AE",
+                      "QA",
+                      "KW",
+                      "OM",
+                      "BH",
+                      "LB",
+                      "SY",
+                      "YM",
+                      "IR",
+                      "TU"
+                    ]
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "top_themes": {
+              "terms": {
+                "field": "V2EnhancedThemes.V2Theme.keyword",
+                "size": 20
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                },
+                {
+                  "bool": {
+                    "should": [
+                      {
+                        "term": {
+                          "V2Locations.CountryCode.keyword": "SA"
+                        }
+                      },
+                      {
+                        "term": {
+                          "V2Locations.CountryCode.keyword": "IR"
+                        }
+                      },
+                      {
+                        "term": {
+                          "V2Locations.CountryCode.keyword": "IQ"
+                        }
+                      },
+                      {
+                        "term": {
+                          "V2Locations.CountryCode.keyword": "IL"
+                        }
+                      },
+                      {
+                        "term": {
+                          "V2Locations.CountryCode.keyword": "JO"
+                        }
+                      },
+                      {
+                        "term": {
+                          "V2Locations.CountryCode.keyword": "KW"
+                        }
+                      },
+                      {
+                        "term": {
+                          "V2Locations.CountryCode.keyword": "LB"
+                        }
+                      },
+                      {
+                        "term": {
+                          "V2Locations.CountryCode.keyword": "OM"
+                        }
+                      },
+                      {
+                        "term": {
+                          "V2Locations.CountryCode.keyword": "QA"
+                        }
+                      },
+                      {
+                        "term": {
+                          "V2Locations.CountryCode.keyword": "SY"
+                        }
+                      },
+                      {
+                        "term": {
+                          "V2Locations.CountryCode.keyword": "AE"
+                        }
+                      },
+                      {
+                        "term": {
+                          "V2Locations.CountryCode.keyword": "YE"
+                        }
+                      },
+                      {
+                        "term": {
+                          "V2Locations.CountryCode.keyword": "EG"
+                        }
+                      }
+                    ],
+                    "minimum_should_match": 1
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "top_themes": {
+              "terms": {
+                "field": "V2EnhancedThemes.V2Theme.keyword",
+                "size": 20
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.8,
+          "feedback": "Unknown fields referenced: V21Date, V2EnhancedThemes.V2Theme.keyword, V2Locations.CountryCode.keyword, field, size.",
+          "details": {
+            "unknown_fields": [
+              "V21Date",
+              "V2EnhancedThemes.V2Theme.keyword",
+              "V2Locations.CountryCode.keyword",
+              "field",
+              "size"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "top_themes"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 1.0,
+          "exact_match_score": 0.0
+        }
+      },
+      {
+        "index": 10,
+        "nl_query": "What is the ratio of positive to negative articles about Japan in the past week?",
+        "exact_match": false,
+        "expected_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "JA"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "positive_articles": {
+              "filter": {
+                "range": {
+                  "V15Tone.Tone": {
+                    "gte": 0
+                  }
+                }
+              }
+            },
+            "negative_articles": {
+              "filter": {
+                "range": {
+                  "V15Tone.Tone": {
+                    "lt": 0
+                  }
+                }
+              }
+            },
+            "avg_positive_score": {
+              "avg": {
+                "field": "V15Tone.PositiveScore"
+              }
+            },
+            "avg_negative_score": {
+              "avg": {
+                "field": "V15Tone.NegativeScore"
+              }
+            }
+          }
+        },
+        "predicted_query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "JP"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "positive_articles": {
+              "filter": {
+                "range": {
+                  "V15Tone.PositiveScore": {
+                    "gt": 0
+                  }
+                }
+              }
+            },
+            "negative_articles": {
+              "filter": {
+                "range": {
+                  "V15Tone.NegativeScore": {
+                    "gt": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "judge_result": {
+          "is_valid": false,
+          "score": 0.76,
+          "feedback": "Unknown fields referenced: V15Tone.NegativeScore, V15Tone.PositiveScore, V21Date, V2Locations.CountryCode.keyword.",
+          "details": {
+            "unknown_fields": [
+              "V15Tone.NegativeScore",
+              "V15Tone.PositiveScore",
+              "V21Date",
+              "V2Locations.CountryCode.keyword"
+            ],
+            "hits_total": 0,
+            "aggregation_names": [
+              "negative_articles",
+              "positive_articles"
+            ]
+          },
+          "safety_score": 1.0,
+          "schema_score": 0.0,
+          "execution_score": 1.0,
+          "task_shape_score": 1.0,
+          "semantic_score": 0.8,
+          "exact_match_score": 0.0
+        }
+      }
+    ]
+  }
+}

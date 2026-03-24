@@ -1,0 +1,205 @@
+{
+  "generate_query.predict": {
+    "traces": [],
+    "train": [],
+    "demos": [
+      {
+        "augmented": true,
+        "nl_query": "What countries are mentioned in articles about the Strait of Hormuz this week?",
+        "es_schema": "Field: GkgRecordId.Date\nType: long\nUsage: Field: GkgRecordId.Date\nType: long\nAliases: GkgRecordId.Date, GkgRecordId, Date, gkgrecordid.date, gkgrecordid date, date, time, timestamp, day, week, month\nUsage: Use this field in Elasticsearch Query DSL when the user asks about GkgRecordId.Date, GkgRecordId, Date, gkgrecordid.date, gkgrecordid date, date.\n---\nField: V2Locations.CountryCode\nType: text\nUsage: Field: V2Locations.CountryCode\nType: text\nAliases: V2Locations.CountryCode, V2Locations, CountryCode, v2locations.countrycode, v2locations countrycode, country, country code, location country\nUsage: Use this field in Elasticsearch Query DSL when the user asks about V2Locations.CountryCode, V2Locations, CountryCode, v2locations.countrycode, v2locations countrycode, country.\n---\nField: V2Locations.CountryCode.keyword\nType: keyword\nUsage: Field: V2Locations.CountryCode.keyword\nType: keyword\nAliases: V2Locations.CountryCode.keyword, V2Locations, CountryCode, keyword, v2locations.countrycode.keyword, v2locations countrycode keyword, country, country code, location country\nUsage: Use this field in Elasticsearch Query DSL when the user asks about V2Locations.CountryCode.keyword, V2Locations, CountryCode, keyword, v2locations.countrycode.keyword, v2locations countrycode keyword.\n---\nField: V2Locations.FeatureId.keyword\nType: keyword\nUsage: Field: V2Locations.FeatureId.keyword\nType: keyword\nAliases: V2Locations.FeatureId.keyword, V2Locations, FeatureId, keyword, v2locations.featureid.keyword, v2locations featureid keyword\nUsage: Use this field in Elasticsearch Query DSL when the user asks about V2Locations.FeatureId.keyword, V2Locations, FeatureId, keyword, v2locations.featureid.keyword, v2locations featureid keyword.\n---\nField: V2Locations.FullName.keyword\nType: keyword\nUsage: Field: V2Locations.FullName.keyword\nType: keyword\nAliases: V2Locations.FullName.keyword, V2Locations, FullName, keyword, v2locations.fullname.keyword, v2locations fullname keyword\nUsage: Use this field in Elasticsearch Query DSL when the user asks about V2Locations.FullName.keyword, V2Locations, FullName, keyword, v2locations.fullname.keyword, v2locations fullname keyword.\n---\nField: V2Locations.LocationLatitude\nType: float\nUsage: Field: V2Locations.LocationLatitude\nType: float\nAliases: V2Locations.LocationLatitude, V2Locations, LocationLatitude, v2locations.locationlatitude, v2locations locationlatitude\nUsage: Use this field in Elasticsearch Query DSL when the user asks about V2Locations.LocationLatitude, V2Locations, LocationLatitude, v2locations.locationlatitude, v2locations locationlatitude.\n---\nField: V2Locations.LocationLongitude\nType: float\nUsage: Field: V2Locations.LocationLongitude\nType: float\nAliases: V2Locations.LocationLongitude, V2Locations, LocationLongitude, v2locations.locationlongitude, v2locations locationlongitude\nUsage: Use this field in Elasticsearch Query DSL when the user asks about V2Locations.LocationLongitude, V2Locations, LocationLongitude, v2locations.locationlongitude, v2locations locationlongitude.\n---\nField: location\nType: geo_point\nUsage: Field: location\nType: geo_point\nAliases: location\nUsage: Use this field in Elasticsearch Query DSL when the user asks about location.",
+        "prev_query": {},
+        "feedback": "",
+        "reasoning": "The user is asking for countries mentioned in articles about the Strait of Hormuz from this week. This is a \"what countries\" question, which requires:\n1. A time filter for \"this week\" (last 7 days)\n2. A filter for articles mentioning \"Strait of Hormuz\" - I'll use a match query on V2Locations.FullName\n3. A terms aggregation on V2Locations.CountryCode.keyword to get the distinct countries\n4. Since this is a ranking/aggregation question (not asking for specific articles), I should use size=0\n\nThe schema shows V2Locations.FullName.keyword is available for location matching, and V2Locations.CountryCode.keyword for aggregating countries. I'll use the date field V21Date for the time range.",
+        "query_dsl": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "match": {
+                    "V2Locations.FullName": "Strait of Hormuz"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "countries": {
+              "terms": {
+                "field": "V2Locations.CountryCode.keyword",
+                "size": 50
+              }
+            }
+          }
+        }
+      },
+      {
+        "augmented": true,
+        "nl_query": "What are the most negative news articles about Iran this week?",
+        "es_schema": "Field: GkgRecordId.Translingual\nType: boolean\nUsage: Field: GkgRecordId.Translingual\nType: boolean\nAliases: GkgRecordId.Translingual, GkgRecordId, Translingual, gkgrecordid.translingual, gkgrecordid translingual\nUsage: Use this field in Elasticsearch Query DSL when the user asks about GkgRecordId.Translingual, GkgRecordId, Translingual, gkgrecordid.translingual, gkgrecordid translingual.\n---\nField: V15Tone.ActivityRefDensity\nType: float\nUsage: Field: V15Tone.ActivityRefDensity\nType: float\nAliases: V15Tone.ActivityRefDensity, V15Tone, ActivityRefDensity, v15tone.activityrefdensity, v15tone activityrefdensity, sentiment, tone, polarity, negative score\nUsage: Use this field in Elasticsearch Query DSL when the user asks about V15Tone.ActivityRefDensity, V15Tone, ActivityRefDensity, v15tone.activityrefdensity, v15tone activityrefdensity, sentiment.\n---\nField: V15Tone.NegativeScore\nType: float\nUsage: Field: V15Tone.NegativeScore\nType: float\nAliases: V15Tone.NegativeScore, V15Tone, NegativeScore, v15tone.negativescore, v15tone negativescore, sentiment, tone, polarity, negative score\nUsage: Use this field in Elasticsearch Query DSL when the user asks about V15Tone.NegativeScore, V15Tone, NegativeScore, v15tone.negativescore, v15tone negativescore, sentiment.\n---\nField: V15Tone.Polarity\nType: float\nUsage: Field: V15Tone.Polarity\nType: float\nAliases: V15Tone.Polarity, V15Tone, Polarity, v15tone.polarity, v15tone polarity, sentiment, tone, polarity, negative score\nUsage: Use this field in Elasticsearch Query DSL when the user asks about V15Tone.Polarity, V15Tone, Polarity, v15tone.polarity, v15tone polarity, sentiment.\n---\nField: V15Tone.PositiveScore\nType: float\nUsage: Field: V15Tone.PositiveScore\nType: float\nAliases: V15Tone.PositiveScore, V15Tone, PositiveScore, v15tone.positivescore, v15tone positivescore, sentiment, tone, polarity, negative score\nUsage: Use this field in Elasticsearch Query DSL when the user asks about V15Tone.PositiveScore, V15Tone, PositiveScore, v15tone.positivescore, v15tone positivescore, sentiment.\n---\nField: V15Tone.SelfGroupRefDensity\nType: float\nUsage: Field: V15Tone.SelfGroupRefDensity\nType: float\nAliases: V15Tone.SelfGroupRefDensity, V15Tone, SelfGroupRefDensity, v15tone.selfgrouprefdensity, v15tone selfgrouprefdensity, sentiment, tone, polarity, negative score\nUsage: Use this field in Elasticsearch Query DSL when the user asks about V15Tone.SelfGroupRefDensity, V15Tone, SelfGroupRefDensity, v15tone.selfgrouprefdensity, v15tone selfgrouprefdensity, sentiment.\n---\nField: V2EnhancedThemes.V2Theme\nType: text\nUsage: Field: V2EnhancedThemes.V2Theme\nType: text\nAliases: V2EnhancedThemes.V2Theme, V2EnhancedThemes, V2Theme, v2enhancedthemes.v2theme, v2enhancedthemes v2theme, theme, topic, category\nUsage: Use this field in Elasticsearch Query DSL when the user asks about V2EnhancedThemes.V2Theme, V2EnhancedThemes, V2Theme, v2enhancedthemes.v2theme, v2enhancedthemes v2theme, theme.\n---\nField: V2ExtrasXML.PubTimestamp\nType: date\nUsage: Field: V2ExtrasXML.PubTimestamp\nType: date\nAliases: V2ExtrasXML.PubTimestamp, V2ExtrasXML, PubTimestamp, v2extrasxml.pubtimestamp, v2extrasxml pubtimestamp, date, time, timestamp, day, week, month\nUsage: Use this field in Elasticsearch Query DSL when the user asks about V2ExtrasXML.PubTimestamp, V2ExtrasXML, PubTimestamp, v2extrasxml.pubtimestamp, v2extrasxml pubtimestamp, date.",
+        "prev_query": {},
+        "feedback": "",
+        "reasoning": "The user wants to find the most negative news articles about Iran from this week. I need to:\n1. Filter for articles about Iran using the V2Locations.CountryCode field with country code \"IR\"\n2. Apply a date range for \"this week\" (past 7 days) using V21Date\n3. Sort by V15Tone.NegativeScore in descending order to get the most negative articles first\n4. Return article titles, document IDs, dates, and tone scores\n\nI'll use the keyword subfield for exact country matching and include both NegativeScore and Polarity in the results for context.",
+        "query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2Locations.CountryCode.keyword": "IR"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V15Tone.NegativeScore": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V15Tone.NegativeScore",
+            "V15Tone.Polarity"
+          ]
+        }
+      },
+      {
+        "nl_query": "What are the most recent articles about drone attacks?",
+        "query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "V2EnhancedThemes.V2Theme.keyword": "DRONES"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "sort": [
+            {
+              "V21Date": {
+                "order": "desc"
+              }
+            }
+          ],
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName"
+          ]
+        }
+      },
+      {
+        "nl_query": "What articles were published about food security or agriculture globally this week?",
+        "query_dsl": {
+          "size": 10,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "terms": {
+                    "V2EnhancedThemes.V2Theme.keyword": [
+                      "WB_2670_JOBS",
+                      "WB_470_EDUCATION",
+                      "TAX_ECON_PRICE"
+                    ]
+                  }
+                },
+                {
+                  "match": {
+                    "V2ExtrasXML.Title": "food"
+                  }
+                },
+                {
+                  "range": {
+                    "V21Date": {
+                      "gte": "now-7d/d",
+                      "lte": "now/d"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "_source": [
+            "V2ExtrasXML.Title",
+            "V2DocId",
+            "V21Date",
+            "V2Locations.FullName"
+          ]
+        }
+      }
+    ],
+    "signature": {
+      "instructions": "Convert a natural language query into valid Elasticsearch Query DSL for the GDELT global news index. \n\n**Query Type Decision**:\n- For **aggregation/ranking questions** (phrases like \"highest\", \"most\", \"top themes\", \"count by\", \"number of articles\"), use `size=0` with aggregations to get statistical results, not individual documents\n- For **retrieval questions** (phrases like \"which articles\", \"show me\", \"list\", \"find articles\"), return actual documents with appropriate `size` limit and `_source` field selection\n\n**Field Selection**:\n- Use only fields that appear in the provided `es_schema`\n- For exact-match filters on text fields, use the `.keyword` subfield (e.g., `V2EnhancedThemes.V2Theme.keyword`)\n- Use date fields (type: `date`) or long date fields (type: `long`) for temporal filtering\n- Prefer keyword fields for terms aggregations and exact-match filters\n- Never invent fields like \"date\", \"title\", \"text\", \"content\", \"category\", or \"countryCode\" unless they appear in the schema\n\n**Query Construction**:\n- For time-bounded questions, include an explicit date range using `now-Xd/d` to `now/d` date math format\n- Combine multiple filter conditions using `bool.must` clauses\n- For negative sentiment queries, use `V15Tone.NegativeScore` sort in descending order\n- For wildcard matching on themes/categories, use the base text field (not `.keyword`) with wildcard patterns\n- Never use Painless scripts\n\n**Output Format**:\n- Output JSON only in the `query_dsl` field\n- The `reasoning` field should explain the query construction logic step by step, including how you identified the query type and which fields you selected from the schema",
+      "fields": [
+        {
+          "prefix": "Nl Query:",
+          "description": "A natural language query describing the search criteria."
+        },
+        {
+          "prefix": "Es Schema:",
+          "description": "Relevant Elasticsearch schema snippets, including field names, types and usage notes."
+        },
+        {
+          "prefix": "Prev Query:",
+          "description": "The previously generated Query DSL if refining. Use {} for first pass."
+        },
+        {
+          "prefix": "Feedback:",
+          "description": "Judge feedback from a previous invalid attempt. Empty string for first pass."
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Query Dsl:",
+          "description": "A JSON object representing the equivalent Elasticsearch Query DSL for the given natural language query."
+        }
+      ]
+    },
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.12",
+      "dspy": "3.1.3",
+      "cloudpickle": "3.1"
+    }
+  }
+}

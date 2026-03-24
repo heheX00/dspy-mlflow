@@ -5,13 +5,13 @@ services:
     ports:
       - "8020:8000"
     volumes:
-      - ./chromadb/chroma_data:/data
+      - chroma_data:/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v2/heartbeat"]
       interval: 10s
       timeout: 5s
       retries: 20
-      
+
   sandbox_elasticsearch:
     build: ./sandbox_es
     container_name: sandbox_elasticsearch
@@ -21,7 +21,7 @@ services:
     ports:
       - "9200:9200"
     volumes:
-      - ./sandbox_es/sandbox_es_data:/usr/share/elasticsearch/data
+      - sandbox_es_data:/usr/share/elasticsearch/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
       interval: 10s
@@ -42,7 +42,7 @@ services:
         condition: service_healthy
       mlflow:
         condition: service_started
-    
+
   mlflow:
     build: ./team_b_mlflow
     container_name: mlflow
@@ -51,13 +51,6 @@ services:
     env_file:
       - .env
 
-networks:
-  dspy-mlflow-network:
-    driver: bridge
-
 volumes:
   chroma_data:
-    driver: local
   sandbox_es_data:
-    driver: local
-  

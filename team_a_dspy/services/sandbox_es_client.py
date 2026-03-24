@@ -1,15 +1,40 @@
-from services.es_client import ESClient
+from __future__ import annotations
+
+from copy import deepcopy
+from typing import Any
+
 from services.config import settings
+from services.es_client import ESClient
 
 
 class SandboxESClient(ESClient):
-    """
-    Client for interacting with the sandbox Elasticsearch instance.
-
-    Allows optional override of connection parameters so it can be used both:
-    - inside Docker (sandbox_elasticsearch)
-    - from host machine (localhost)
-    """
+    SAFE_MAX_SIZE = 100
+    SAFE_MAX_AGG_SIZE = 100
+    AGG_FIELD_TYPES = {
+        "terms",
+        "avg",
+        "sum",
+        "min",
+        "max",
+        "cardinality",
+        "value_count",
+        "date_histogram",
+        "histogram",
+        "stats",
+        "extended_stats",
+        "percentiles",
+        "median_absolute_deviation",
+    }
+    QUERY_FIELD_TYPES = {
+        "term",
+        "terms",
+        "range",
+        "match",
+        "match_phrase",
+        "wildcard",
+        "prefix",
+        "regexp",
+    }
 
     def __init__(
         self,
@@ -26,43 +51,383 @@ class SandboxESClient(ESClient):
             index or settings.sandbox_es_index,
             verify_ssl if verify_ssl is not None else settings.sandbox_es_verify_ssl,
         )
+        self._flat_mapping_cache: dict[str, str] | None = None
 
-    def validate_query_dsl(self, query_dsl: dict):
-        """
-        Validates the generated Query DSL against the sandbox Elasticsearch index.
+    def get_flat_mapping(self) -> dict[str, str]:
+        if self._flat_mapping_cache is None:
+            self._flat_mapping_cache = self.flatten_es_mapping()
+        return self._flat_mapping_cache
 
-        For indices.validate_query, only the "query" section should be passed.
-        """
+    async def validate_query_dsl(
+        self,
+        query_dsl: dict[str, Any],
+        expected_query_dsl: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        return await self.evaluate_query_dsl(
+            query_dsl=query_dsl,
+            expected_query_dsl=expected_query_dsl,
+        )
 
-        try:
-            full_dsl = query_dsl.get("query_dsl", {})
-            query_part = full_dsl.get("query", {})
-
-            if not query_part:
-                return {
-                    "is_valid": False,
-                    "feedback": "Missing 'query' field in generated query_dsl.",
-                }
-
-            response = self.es.indices.validate_query(
-                index=self.index,
-                body={"query": query_part},
-                explain=True,
+    async def evaluate_query_dsl(
+        self,
+        query_dsl: dict[str, Any],
+        expected_query_dsl: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        normalized = self.normalize_query_dsl(query_dsl)
+        if not normalized:
+            return self._result(
+                is_valid=False,
+                score=0.0,
+                feedback="Generated query_dsl is empty or not a dictionary.",
+                details={"error": "empty_query"},
+                safety_score=0.0,
+                schema_score=0.0,
+                execution_score=0.0,
+                task_shape_score=0.0,
+                semantic_score=0.0,
+                exact_match_score=0.0,
             )
 
-            return {
-                "is_valid": response.body.get("valid", False),
-                "feedback": response.body.get(
-                    "explanations",
-                    response.body.get("error", "No explanation provided"),
-                ),
-            }
+        safety_ok, safety_feedback = self._check_safety(normalized)
+        if not safety_ok:
+            return self._result(
+                is_valid=False,
+                score=0.0,
+                feedback=safety_feedback,
+                details={"error": "unsafe_query"},
+                safety_score=0.0,
+                schema_score=0.0,
+                execution_score=0.0,
+                task_shape_score=0.0,
+                semantic_score=0.0,
+                exact_match_score=0.0,
+            )
 
-        except Exception as e:
-            return {
-                "is_valid": False,
-                "feedback": f"Elasticsearch validation error: {type(e).__name__}: {e}",
-            }
+        schema_score, unknown_fields, referenced_fields = self._score_schema_fields(normalized)
+        execution_score, execution_feedback, execution_details = await self._score_execution(normalized)
 
-    def close(self):
-        self.es.close()
+        task_shape_score = 1.0
+        semantic_score = 1.0
+        exact_match_score = 0.0
+
+        if expected_query_dsl is not None:
+            expected = self.normalize_query_dsl(expected_query_dsl)
+            task_shape_score = self._score_task_shape(expected, normalized)
+            semantic_score = self._score_semantic_alignment(expected, normalized)
+            exact_match_score = 1.0 if expected == normalized else 0.0
+
+        base_score = (
+            (0.25 * 1.0)
+            + (0.25 * schema_score)
+            + (0.25 * execution_score)
+            + (0.15 * task_shape_score)
+            + (0.10 * semantic_score)
+        )
+        is_valid = execution_score >= 0.95 and schema_score >= 0.999 and not unknown_fields
+        final_score = round(base_score if is_valid else min(base_score, 0.20), 4)
+
+        feedback_parts: list[str] = []
+        if unknown_fields:
+            feedback_parts.append(f"Unknown fields referenced: {', '.join(sorted(unknown_fields))}.")
+        if execution_feedback:
+            feedback_parts.append(execution_feedback)
+        if not feedback_parts:
+            feedback_parts.append("Query validated and executed successfully.")
+
+        return self._result(
+            is_valid=is_valid,
+            score=final_score,
+            feedback=" ".join(feedback_parts),
+            details={
+                "referenced_fields": sorted(referenced_fields),
+                "unknown_fields": sorted(unknown_fields),
+                **execution_details,
+            },
+            safety_score=1.0,
+            schema_score=schema_score,
+            execution_score=execution_score,
+            task_shape_score=task_shape_score,
+            semantic_score=semantic_score,
+            exact_match_score=exact_match_score,
+        )
+
+    @staticmethod
+    def normalize_query_dsl(payload: Any) -> dict[str, Any]:
+        if not isinstance(payload, dict):
+            return {}
+        nested = payload.get("query_dsl")
+        if isinstance(nested, dict):
+            return nested
+        return payload
+
+    def _result(
+        self,
+        *,
+        is_valid: bool,
+        score: float,
+        feedback: str,
+        details: dict[str, Any],
+        safety_score: float,
+        schema_score: float,
+        execution_score: float,
+        task_shape_score: float,
+        semantic_score: float,
+        exact_match_score: float,
+    ) -> dict[str, Any]:
+        return {
+            "is_valid": bool(is_valid),
+            "score": float(score),
+            "feedback": feedback,
+            "details": details,
+            "safety_score": float(safety_score),
+            "schema_score": float(schema_score),
+            "execution_score": float(execution_score),
+            "task_shape_score": float(task_shape_score),
+            "semantic_score": float(semantic_score),
+            "exact_match_score": float(exact_match_score),
+        }
+
+    def _check_safety(self, query_dsl: dict[str, Any]) -> tuple[bool, str]:
+        if self._contains_key(query_dsl, "script"):
+            return False, "Unsafe query: 'script' is not allowed."
+
+        for size in self._find_numeric_values_for_key(query_dsl, "size"):
+            if size > self.SAFE_MAX_SIZE:
+                return False, f"Unsafe query: size={size} exceeds SAFE_MAX_SIZE={self.SAFE_MAX_SIZE}."
+
+        for agg_size in self._find_terms_agg_sizes(query_dsl):
+            if agg_size > self.SAFE_MAX_AGG_SIZE:
+                return False, (
+                    f"Unsafe query: aggregation size={agg_size} exceeds "
+                    f"SAFE_MAX_AGG_SIZE={self.SAFE_MAX_AGG_SIZE}."
+                )
+
+        return True, ""
+
+    def _score_schema_fields(self, query_dsl: dict[str, Any]) -> tuple[float, set[str], set[str]]:
+        valid_fields = set(self.get_flat_mapping().keys())
+        referenced_fields = self.extract_referenced_fields(query_dsl)
+
+        if not referenced_fields:
+            return 0.0, set(), set()
+
+        unknown_fields = {field for field in referenced_fields if field not in valid_fields}
+        known_count = len(referenced_fields) - len(unknown_fields)
+        score = round(known_count / max(1, len(referenced_fields)), 4)
+        return score, unknown_fields, referenced_fields
+
+    async def _score_execution(self, query_dsl: dict[str, Any]) -> tuple[float, str, dict[str, Any]]:
+        body = self._cap_query(query_dsl)
+        query_part = body.get("query", {})
+
+        if query_part:
+            try:
+                validate_response = await self.es.indices.validate_query(
+                    index=self.index,
+                    body={"query": query_part},
+                    explain=True,
+                )
+                validate_body = self._response_body(validate_response)
+                if validate_body and not bool(validate_body.get("valid", True)):
+                    return 0.10, "Elasticsearch validate_query reported the query as invalid.", {
+                        "validate_response": validate_body
+                    }
+            except Exception as exc:
+                return 0.10, f"Elasticsearch validate_query failed: {type(exc).__name__}: {exc}", {}
+
+        try:
+            search_response = await self.es.search(index=self.index, body=body)
+            search_body = self._response_body(search_response)
+            return 1.0, "", {
+                "hits_total": self._extract_total_hits(search_body),
+                "aggregation_names": list(search_body.get("aggregations", {}).keys()),
+            }
+        except Exception as exc:
+            return 0.10, f"Elasticsearch search failed: {type(exc).__name__}: {exc}", {}
+
+    def _score_task_shape(self, expected: dict[str, Any], predicted: dict[str, Any]) -> float:
+        checks = [
+            int(("aggs" in expected) == ("aggs" in predicted)),
+            int(("sort" in expected) == ("sort" in predicted)),
+            int(("query" in expected) == ("query" in predicted)),
+            int(("_source" in expected) == ("_source" in predicted)),
+            int(self._contains_query_type(expected, "range") == self._contains_query_type(predicted, "range")),
+        ]
+
+        expected_size = expected.get("size")
+        predicted_size = predicted.get("size")
+        if expected_size is None and predicted_size is None:
+            checks.append(1)
+        elif isinstance(expected_size, int) and isinstance(predicted_size, int):
+            checks.append(
+                int((expected_size == 0 and predicted_size == 0) or (expected_size > 0 and predicted_size > 0))
+            )
+        else:
+            checks.append(0)
+
+        return round(sum(checks) / len(checks), 4)
+
+    def _score_semantic_alignment(self, expected: dict[str, Any], predicted: dict[str, Any]) -> float:
+        expected_fields = self.extract_referenced_fields(expected)
+        predicted_fields = self.extract_referenced_fields(predicted)
+
+        if not expected_fields and not predicted_fields:
+            return 1.0
+        if not expected_fields or not predicted_fields:
+            return 0.0
+
+        overlap = len(expected_fields & predicted_fields)
+        union = len(expected_fields | predicted_fields)
+        return round(overlap / max(1, union), 4)
+
+    def _cap_query(self, query_dsl: dict[str, Any]) -> dict[str, Any]:
+        body = deepcopy(query_dsl)
+
+        if isinstance(body.get("size"), int):
+            body["size"] = min(body["size"], self.SAFE_MAX_SIZE)
+
+        if isinstance(body.get("aggs"), dict):
+            body["aggs"] = self._cap_aggs(body["aggs"])
+
+        return body
+
+    def _cap_aggs(self, aggs: dict[str, Any]) -> dict[str, Any]:
+        capped: dict[str, Any] = {}
+        for agg_name, agg_body in aggs.items():
+            if not isinstance(agg_body, dict):
+                capped[agg_name] = agg_body
+                continue
+
+            agg_copy = deepcopy(agg_body)
+
+            if isinstance(agg_copy.get("terms"), dict) and isinstance(agg_copy["terms"].get("size"), int):
+                agg_copy["terms"]["size"] = min(agg_copy["terms"]["size"], self.SAFE_MAX_AGG_SIZE)
+
+            if isinstance(agg_copy.get("aggs"), dict):
+                agg_copy["aggs"] = self._cap_aggs(agg_copy["aggs"])
+
+            capped[agg_name] = agg_copy
+
+        return capped
+
+    @classmethod
+    def extract_referenced_fields(cls, query_dsl: dict[str, Any]) -> set[str]:
+        fields: set[str] = set()
+
+        def walk(node: Any) -> None:
+            if isinstance(node, dict):
+                for key, value in node.items():
+                    if key in cls.QUERY_FIELD_TYPES and isinstance(value, dict):
+                        for field_name in value.keys():
+                            if isinstance(field_name, str):
+                                fields.add(field_name)
+
+                    elif key == "exists" and isinstance(value, dict):
+                        field_name = value.get("field")
+                        if isinstance(field_name, str):
+                            fields.add(field_name)
+
+                    elif key in cls.AGG_FIELD_TYPES and isinstance(value, dict):
+                        field_name = value.get("field")
+                        if isinstance(field_name, str):
+                            fields.add(field_name)
+
+                    elif key == "nested" and isinstance(value, dict):
+                        path = value.get("path")
+                        if isinstance(path, str):
+                            fields.add(path)
+
+                    elif key == "sort":
+                        if isinstance(value, list):
+                            for item in value:
+                                if isinstance(item, dict):
+                                    for field_name in item.keys():
+                                        if isinstance(field_name, str):
+                                            fields.add(field_name)
+                        elif isinstance(value, dict):
+                            for field_name in value.keys():
+                                if isinstance(field_name, str):
+                                    fields.add(field_name)
+
+                    walk(value)
+
+            elif isinstance(node, list):
+                for item in node:
+                    walk(item)
+
+        walk(query_dsl)
+        return fields
+
+    @staticmethod
+    def _response_body(response: Any) -> dict[str, Any]:
+        if isinstance(response, dict):
+            return response
+        body = getattr(response, "body", None)
+        if isinstance(body, dict):
+            return body
+        return {}
+
+    @staticmethod
+    def _extract_total_hits(search_body: dict[str, Any]) -> int:
+        hits = search_body.get("hits", {})
+        total = hits.get("total", 0)
+        if isinstance(total, dict):
+            return int(total.get("value", 0))
+        if isinstance(total, int):
+            return total
+        return 0
+
+    @staticmethod
+    def _contains_key(node: Any, target_key: str) -> bool:
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key == target_key:
+                    return True
+                if SandboxESClient._contains_key(value, target_key):
+                    return True
+        elif isinstance(node, list):
+            for item in node:
+                if SandboxESClient._contains_key(item, target_key):
+                    return True
+        return False
+
+    @staticmethod
+    def _find_numeric_values_for_key(node: Any, target_key: str) -> list[int]:
+        values: list[int] = []
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key == target_key and isinstance(value, int):
+                    values.append(value)
+                values.extend(SandboxESClient._find_numeric_values_for_key(value, target_key))
+        elif isinstance(node, list):
+            for item in node:
+                values.extend(SandboxESClient._find_numeric_values_for_key(item, target_key))
+        return values
+
+    @staticmethod
+    def _find_terms_agg_sizes(node: Any) -> list[int]:
+        sizes: list[int] = []
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key == "terms" and isinstance(value, dict) and isinstance(value.get("field"), str):
+                    if isinstance(value.get("size"), int):
+                        sizes.append(value["size"])
+                sizes.extend(SandboxESClient._find_terms_agg_sizes(value))
+        elif isinstance(node, list):
+            for item in node:
+                sizes.extend(SandboxESClient._find_terms_agg_sizes(item))
+        return sizes
+
+    @staticmethod
+    def _contains_query_type(node: Any, query_type: str) -> bool:
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key == query_type:
+                    return True
+                if SandboxESClient._contains_query_type(value, query_type):
+                    return True
+        elif isinstance(node, list):
+            for item in node:
+                if SandboxESClient._contains_query_type(item, query_type):
+                    return True
+        return False
