@@ -184,62 +184,24 @@ def schema_text_contains_all_fields(schema_text: str, required_fields: set[str])
     return all(field in schema_text for field in required_fields)
 
 
-def filter_incompatible_rows(
-    rows: list[dict[str, Any]],
-    sandbox_client: SandboxESClient,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    valid_fields = set(sandbox_client.get_flat_mapping().keys())
-
-    kept: list[dict[str, Any]] = []
-    dropped: list[dict[str, Any]] = []
-
-    for row in rows:
-        expected_fields = extract_fields_from_expected_query(sandbox_client, row)
-        missing_in_mapping = sorted(field for field in expected_fields if field not in valid_fields)
-        missing_in_schema = sorted(field for field in expected_fields if field not in row["es_schema"])
-
-        if missing_in_mapping or missing_in_schema:
-            bad_row = dict(row)
-            bad_row["_drop_reason"] = {
-                "missing_in_mapping": missing_in_mapping,
-                "missing_in_schema": missing_in_schema,
-                "expected_fields": sorted(expected_fields),
-            }
-            dropped.append(bad_row)
-            continue
-
-        kept.append(row)
-
-    return kept, dropped
-
-
+# Version 1 filter_incompatible_rows
 # def filter_incompatible_rows(
 #     rows: list[dict[str, Any]],
 #     sandbox_client: SandboxESClient,
 # ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-#     """
-#     Drop only if expected fields do not exist in sandbox mapping.
-#     If expected fields are missing only from retrieved es_schema text,
-#     repair the row by appending those field definitions.
-#     """
-#     flat_mapping = sandbox_client.get_flat_mapping()
-#     valid_fields = set(flat_mapping.keys())
+#     valid_fields = set(sandbox_client.get_flat_mapping().keys())
 
 #     kept: list[dict[str, Any]] = []
 #     dropped: list[dict[str, Any]] = []
 
 #     for row in rows:
 #         expected_fields = extract_fields_from_expected_query(sandbox_client, row)
-#         schema_text = row.get("es_schema", "") or ""
-
 #         missing_in_mapping = sorted(field for field in expected_fields if field not in valid_fields)
-#         missing_in_schema = sorted(field for field in expected_fields if field not in schema_text)
+#         missing_in_schema = sorted(field for field in expected_fields if field not in row["es_schema"])
 
-#         # Hard drop only if field truly does not exist in ES mapping
-#         if missing_in_mapping:
+#         if missing_in_mapping or missing_in_schema:
 #             bad_row = dict(row)
 #             bad_row["_drop_reason"] = {
-#                 "reason": "expected_fields_missing_from_sandbox_mapping",
 #                 "missing_in_mapping": missing_in_mapping,
 #                 "missing_in_schema": missing_in_schema,
 #                 "expected_fields": sorted(expected_fields),
@@ -247,51 +209,93 @@ def filter_incompatible_rows(
 #             dropped.append(bad_row)
 #             continue
 
-#         repaired_row = dict(row)
-
-#         # Soft repair if retriever did not include all needed fields
-#         if missing_in_schema:
-#             appendix = build_required_schema_appendix(
-#                 sandbox_client=sandbox_client,
-#                 required_fields=set(missing_in_schema),
-#             )
-#             repaired_row["es_schema"] = (
-#                 schema_text.strip()
-#                 + "\n\n### REQUIRED_FIELDS_APPENDIX ###\n"
-#                 + appendix
-#             )
-#             repaired_row["_schema_repair"] = {
-#                 "missing_in_schema_before_repair": missing_in_schema,
-#                 "expected_fields": sorted(expected_fields),
-#             }
-
-#         kept.append(repaired_row)
+#         kept.append(row)
 
 #     return kept, dropped
 
 
-# def build_required_schema_appendix(
-#     sandbox_client: SandboxESClient,
-#     required_fields: set[str],
-# ) -> str:
-#     flat_mapping = sandbox_client.get_flat_mapping()
-#     lines: list[str] = []
+# Version 2 filter_incompatible_rows
+def filter_incompatible_rows(
+    rows: list[dict[str, Any]],
+    sandbox_client: SandboxESClient,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """
+    Drop only if expected fields do not exist in sandbox mapping.
+    If expected fields are missing only from retrieved es_schema text,
+    repair the row by appending those field definitions.
+    """
+    flat_mapping = sandbox_client.get_flat_mapping()
+    valid_fields = set(flat_mapping.keys())
 
-#     for field_name in sorted(required_fields):
-#         field_type = flat_mapping.get(field_name, "unknown")
-#         aliases = build_field_aliases(field_name)
-#         lines.append(
-#             "\n".join(
-#                 [
-#                     f"Field: {field_name}",
-#                     f"Type: {field_type}",
-#                     f"Aliases: {', '.join(aliases)}",
-#                     f"Usage: This field is relevant to the current task.",
-#                 ]
-#             )
-#         )
+    kept: list[dict[str, Any]] = []
+    dropped: list[dict[str, Any]] = []
 
-#     return "\n\n".join(lines)
+    for row in rows:
+        expected_fields = extract_fields_from_expected_query(sandbox_client, row)
+        schema_text = row.get("es_schema", "") or ""
+
+        missing_in_mapping = sorted(field for field in expected_fields if field not in valid_fields)
+        missing_in_schema = sorted(field for field in expected_fields if field not in schema_text)
+
+        # Hard drop only if field truly does not exist in ES mapping
+        if missing_in_mapping:
+            bad_row = dict(row)
+            bad_row["_drop_reason"] = {
+                "reason": "expected_fields_missing_from_sandbox_mapping",
+                "missing_in_mapping": missing_in_mapping,
+                "missing_in_schema": missing_in_schema,
+                "expected_fields": sorted(expected_fields),
+            }
+            dropped.append(bad_row)
+            continue
+
+        repaired_row = dict(row)
+
+        # Soft repair if retriever did not include all needed fields
+        if missing_in_schema:
+            appendix = build_required_schema_appendix(
+                sandbox_client=sandbox_client,
+                required_fields=set(missing_in_schema),
+            )
+            repaired_row["es_schema"] = (
+                schema_text.strip()
+                + "\n\n### REQUIRED_FIELDS_APPENDIX ###\n"
+                + appendix
+            )
+            repaired_row["_schema_repair"] = {
+                "missing_in_schema_before_repair": missing_in_schema,
+                "expected_fields": sorted(expected_fields),
+            }
+
+        kept.append(repaired_row)
+
+    return kept, dropped
+
+
+def build_required_schema_appendix(
+    sandbox_client: SandboxESClient,
+    required_fields: set[str],
+) -> str:
+    flat_mapping = sandbox_client.get_flat_mapping()
+    lines: list[str] = []
+
+    for field_name in sorted(required_fields):
+        field_type = flat_mapping.get(field_name, "unknown")
+        aliases = build_field_aliases(field_name)
+        lines.append(
+            "\n".join(
+                [
+                    f"Field: {field_name}",
+                    f"Type: {field_type}",
+                    f"Aliases: {', '.join(aliases)}",
+                    f"Usage: This field is relevant to the current task.",
+                ]
+            )
+        )
+
+    return "\n\n".join(lines)
+
+# Version 2 filter_incompatible_rows end here
 
 
 def build_optimizer(metric_callable, optimizer_type: str):
