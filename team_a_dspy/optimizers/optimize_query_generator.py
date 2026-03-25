@@ -17,7 +17,6 @@ if str(TEAM_A_ROOT) not in sys.path:
 from metrics.es_query_metric import ExecutionAwareESMetric, metric_exact_query_dsl, normalize_query_dsl
 from services.chroma_client import ChromaClient
 from services.config import settings
-from services.es_client import ESClient
 from services.judge_dspy import JudgeDSPY
 from services.sandbox_es_client import SandboxESClient
 from signatures.es_query_generator import NLToQuerySignature
@@ -112,40 +111,30 @@ def build_field_aliases(field_name: str) -> list[str]:
     return deduped
 
 
-def ensure_chroma_has_schema(chroma_client: ChromaClient) -> None:
+def ensure_chroma_has_schema(chroma_client: ChromaClient, sandbox_client: SandboxESClient) -> None:
     if chroma_client.count() > 0:
         return
 
-    es_client = ESClient(
-        host=settings.es_host,
-        username=settings.es_username,
-        password=settings.es_password,
-        index=settings.es_index,
-        verify_ssl=settings.es_verify_ssl,
-    )
-    try:
-        flat_mapping = es_client.flatten_es_mapping()
-        docs: list[dict[str, str]] = []
-        for field_name, field_type in sorted(flat_mapping.items()):
-            aliases = build_field_aliases(field_name)
-            interpretation = "\n".join(
-                [
-                    f"Field: {field_name}",
-                    f"Type: {field_type}",
-                    f"Aliases: {', '.join(aliases)}",
-                    f"Usage: Use this field when the user asks about {', '.join(aliases[:6])}.",
-                ]
-            )
-            docs.append(
-                {
-                    "field_name": field_name,
-                    "field_type": field_type,
-                    "interpretation": interpretation,
-                }
-            )
-        chroma_client.add_documents(docs)
-    finally:
-        es_client.close()
+    flat_mapping = sandbox_client.get_flat_mapping()
+    docs: list[dict[str, str]] = []
+    for field_name, field_type in sorted(flat_mapping.items()):
+        aliases = build_field_aliases(field_name)
+        interpretation = "\n".join(
+            [
+                f"Field: {field_name}",
+                f"Type: {field_type}",
+                f"Aliases: {', '.join(aliases)}",
+                f"Usage: Use this field when the user asks about {', '.join(aliases[:6])}.",
+            ]
+        )
+        docs.append(
+            {
+                "field_name": field_name,
+                "field_type": field_type,
+                "interpretation": interpretation,
+            }
+        )
+    chroma_client.add_documents(docs)
 
 
 def enrich_rows_with_schema(rows: list[dict[str, Any]], retriever: SchemaRetriever) -> list[dict[str, Any]]:
@@ -168,6 +157,46 @@ def rows_to_examples(rows: list[dict[str, Any]]) -> list[dspy.Example]:
             ).with_inputs("nl_query", "es_schema")
         )
     return examples
+
+
+def extract_fields_from_expected_query(sandbox_client: SandboxESClient, row: dict[str, Any]) -> set[str]:
+    expected = normalize_query_dsl(row["expected_query_dsl"])
+    return sandbox_client.extract_referenced_fields(expected)
+
+
+def schema_text_contains_all_fields(schema_text: str, required_fields: set[str]) -> bool:
+    if not required_fields:
+        return True
+    return all(field in schema_text for field in required_fields)
+
+
+def filter_incompatible_rows(
+    rows: list[dict[str, Any]],
+    sandbox_client: SandboxESClient,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    valid_fields = set(sandbox_client.get_flat_mapping().keys())
+
+    kept: list[dict[str, Any]] = []
+    dropped: list[dict[str, Any]] = []
+
+    for row in rows:
+        expected_fields = extract_fields_from_expected_query(sandbox_client, row)
+        missing_in_mapping = sorted(field for field in expected_fields if field not in valid_fields)
+        missing_in_schema = sorted(field for field in expected_fields if field not in row["es_schema"])
+
+        if missing_in_mapping or missing_in_schema:
+            bad_row = dict(row)
+            bad_row["_drop_reason"] = {
+                "missing_in_mapping": missing_in_mapping,
+                "missing_in_schema": missing_in_schema,
+                "expected_fields": sorted(expected_fields),
+            }
+            dropped.append(bad_row)
+            continue
+
+        kept.append(row)
+
+    return kept, dropped
 
 
 def build_optimizer(metric_callable, optimizer_type: str):
@@ -290,27 +319,41 @@ def main() -> None:
 
     configure_lm()
 
+    sandbox_client = SandboxESClient(
+        host="http://localhost:9200" if settings.dev else None
+    )
+    judge = JudgeDSPY(sandbox_es_client=sandbox_client)
+
     rows = load_jsonl_rows(dataset_path)
     train_rows, dev_rows = split_rows(rows, train_ratio=args.train_ratio, seed=args.seed)
 
     chroma_client = ChromaClient(dev=settings.dev)
-    ensure_chroma_has_schema(chroma_client)
+    ensure_chroma_has_schema(chroma_client, sandbox_client)
     schema_retriever = SchemaRetriever(chroma_client=chroma_client)
 
     train_rows = enrich_rows_with_schema(train_rows, schema_retriever)
     dev_rows = enrich_rows_with_schema(dev_rows, schema_retriever)
+
+    train_rows, dropped_train_rows = filter_incompatible_rows(train_rows, sandbox_client)
+    dev_rows, dropped_dev_rows = filter_incompatible_rows(dev_rows, sandbox_client)
+
+    if not train_rows:
+        raise ValueError("All train rows were dropped as incompatible with sandbox mapping/schema.")
+    if not dev_rows:
+        raise ValueError("All dev rows were dropped as incompatible with sandbox mapping/schema.")
+
     trainset = rows_to_examples(train_rows)
     devset = rows_to_examples(dev_rows)
 
     train_split_path = save_splits_dir / "optimizer_trainset.jsonl"
     dev_split_path = save_splits_dir / "optimizer_devset.jsonl"
+    dropped_train_path = save_splits_dir / "optimizer_trainset_dropped.jsonl"
+    dropped_dev_path = save_splits_dir / "optimizer_devset_dropped.jsonl"
+
     write_jsonl_rows(train_split_path, train_rows)
     write_jsonl_rows(dev_split_path, dev_rows)
-
-    sandbox_client = SandboxESClient(
-        host="http://localhost:9200" if settings.dev else None
-    )
-    judge = JudgeDSPY(sandbox_es_client=sandbox_client)
+    write_jsonl_rows(dropped_train_path, dropped_train_rows)
+    write_jsonl_rows(dropped_dev_path, dropped_dev_rows)
 
     if args.metric_type == "execution":
         metric_callable = ExecutionAwareESMetric(sandbox_client=sandbox_client)
@@ -342,11 +385,19 @@ def main() -> None:
         "split_files": {
             "train": str(train_split_path),
             "dev": str(dev_split_path),
+            "dropped_train": str(dropped_train_path),
+            "dropped_dev": str(dropped_dev_path),
         },
         "optimizer": {
             "type": teleprompter.__class__.__name__,
             "metric": metric_name,
             "student_program": "OptimizableNLToQueryDSL",
+        },
+        "dataset_filtering": {
+            "train_kept": len(train_rows),
+            "train_dropped": len(dropped_train_rows),
+            "dev_kept": len(dev_rows),
+            "dev_dropped": len(dropped_dev_rows),
         },
         "train_summary": train_summary,
         "dev_summary": dev_summary,
@@ -361,6 +412,8 @@ def main() -> None:
     print(f"Loaded dataset: {dataset_path}")
     print(f"Saved train split: {train_split_path}")
     print(f"Saved dev split: {dev_split_path}")
+    print(f"Saved dropped train split: {dropped_train_path}")
+    print(f"Saved dropped dev split: {dropped_dev_path}")
     print(f"Saved optimized artifact: {artifact_output_path}")
     print(f"Saved report: {report_output_path}")
     print_summary("TRAIN", train_summary)

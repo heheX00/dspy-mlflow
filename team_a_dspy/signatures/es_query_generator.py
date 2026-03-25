@@ -1,26 +1,10 @@
 from __future__ import annotations
 
-import asyncio
-
 import dspy
 
 from services.chroma_client import ChromaClient
 from services.judge_dspy import JudgeDSPY
 from signatures.schema_interpreter import SchemaRetriever
-
-
-def _run_async(coro):
-    try:
-        return asyncio.run(coro)
-    except RuntimeError:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            new_loop = asyncio.new_event_loop()
-            try:
-                return new_loop.run_until_complete(coro)
-            finally:
-                new_loop.close()
-        return loop.run_until_complete(coro)
 
 
 class NLToQuerySignature(dspy.Signature):
@@ -73,8 +57,8 @@ class NLToQueryDSL(dspy.Module):
         current_query_dsl = generated.query_dsl
 
         for _ in range(self.max_refine_attempts + 1):
-            judge_result = _run_async(
-                self.dspy_judge.evaluate_query_dsl(generated_query_dsl=current_query_dsl)
+            judge_result = self.dspy_judge.evaluate_query_dsl(
+                generated_query_dsl=current_query_dsl
             )
             if judge_result.get("is_valid"):
                 return dspy.Prediction(query_dsl=current_query_dsl, es_schema=es_schema, judge_result=judge_result)
