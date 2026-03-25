@@ -193,22 +193,22 @@ async def initialize(
 ):
     dspy_client.startup()
     sample_docs = dspy_client.fetch_samples()
-    def push_to_dev_es(sandbox_es_client: SandboxESClient, docs: list[dict]):
-        """
-        Pushes the sample documents to the sandbox ES instance.
-        """
-        if not docs:
-            return
-        actions = [
-            {
-                "_index": settings.sandbox_es_index,
-                "_id": doc.get("_id"),
-                "_source": doc.get("_source"),
-            }
-            for doc in docs
-        ]
+    def push_to_dev_es(sandbox_es_client, docs):
+        actions = []
+
+        for doc in docs:
+            # doc is already _source (based on your earlier pipeline)
+            if not isinstance(doc, dict):
+                continue
+
+            actions.append({
+                "_index": sandbox_es_client.index,
+                "_id": str(doc.get("GkgRecordId") or doc.get("id") or ""),
+                "_source": doc
+            })
+
         success, failed = helpers.bulk(sandbox_es_client.es, actions)
-        print(f"Succeeded: {success}, Failed: {failed}")
+        return success, failed
 
     push_to_dev_es(sandbox_es_client, sample_docs)
     return {"status": "initialized"}

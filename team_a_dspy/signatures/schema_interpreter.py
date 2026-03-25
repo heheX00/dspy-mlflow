@@ -100,7 +100,7 @@ class SchemaRetriever:
         "today",
     }
 
-    def __init__(self, chroma_client: ChromaClient, k_primary: int = 8, k_fallback: int = 4):
+    def __init__(self, chroma_client: ChromaClient, k_primary: int = 10, k_fallback: int = 5):
         self.chroma_client = chroma_client
         self.k_primary = k_primary
         self.k_fallback = k_fallback
@@ -115,12 +115,12 @@ class SchemaRetriever:
         for item in self.flatten_chroma_results(primary_results):
             relevant_schema[item["field_name"]] = item
 
-        if len(relevant_schema) < 8:
+        if len(relevant_schema) < 10:
             for token in self._expand_query_terms(nl_query):
                 token_results = self.chroma_client.query(query_text=token, k=self.k_fallback)
                 for item in self.flatten_chroma_results(token_results):
                     relevant_schema[item["field_name"]] = item
-                if len(relevant_schema) >= 12:
+                if len(relevant_schema) >= 15:
                     break
 
         if not relevant_schema:

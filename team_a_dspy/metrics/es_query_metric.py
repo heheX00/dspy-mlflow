@@ -5,13 +5,12 @@ from typing import Any
 
 import dspy
 
-from services.sandbox_es_client import SandboxESClient
-
+try:
+    from team_a_dspy.services.sandbox_es_client import SandboxESClient
+except ModuleNotFoundError:
+    from services.sandbox_es_client import SandboxESClient
 
 def normalize_query_dsl(payload: Any) -> dict[str, Any]:
-    """
-    Normalize different possible output shapes into a pure ES DSL dict.
-    """
     if not isinstance(payload, dict):
         return {}
     nested = payload.get("query_dsl")
@@ -21,12 +20,6 @@ def normalize_query_dsl(payload: Any) -> dict[str, Any]:
 
 
 def _run_async(coro):
-    """
-    Safely execute async code from sync context.
-    Handles:
-    - normal python execution
-    - already-running event loops
-    """
     try:
         return asyncio.run(coro)
     except RuntimeError:
@@ -42,9 +35,10 @@ def _run_async(coro):
 
 class ExecutionAwareESMetric:
     """
-    Metric for optimizing Elasticsearch Query DSL generation.
-
-    Returns judge score directly, so DSPy can see partial improvements.
+    Stronger optimization metric:
+    - executes query
+    - validates schema
+    - scores semantic closeness to expected query
     """
 
     def __init__(self, sandbox_client: SandboxESClient):
@@ -68,9 +62,6 @@ class ExecutionAwareESMetric:
 
 
 def metric_exact_query_dsl(example: dspy.Example, pred: dspy.Prediction, trace=None) -> float:
-    """
-    Strict exact match metric.
-    """
     gold = normalize_query_dsl(getattr(example, "query_dsl", {}))
     candidate = normalize_query_dsl(getattr(pred, "query_dsl", {}))
     return 1.0 if gold == candidate else 0.0

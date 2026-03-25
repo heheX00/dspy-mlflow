@@ -3,9 +3,13 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
-from services.config import settings
-from services.es_client import ESClient
 
+try:
+    from team_a_dspy.services.config import settings
+    from team_a_dspy.services.es_client import ESClient
+except ModuleNotFoundError:
+    from services.config import settings
+    from services.es_client import ESClient
 
 class SandboxESClient(ESClient):
     SAFE_MAX_SIZE = 100
@@ -29,6 +33,7 @@ class SandboxESClient(ESClient):
 
     QUERY_FIELD_TYPES = {
         "term",
+        "terms",
         "range",
         "match",
         "match_phrase",
@@ -112,34 +117,44 @@ class SandboxESClient(ESClient):
         task_shape_score = 1.0
         semantic_score = 1.0
         exact_match_score = 0.0
+        semantic_details: dict[str, Any] = {}
 
         if expected_query_dsl is not None:
             expected = self.normalize_query_dsl(expected_query_dsl)
             task_shape_score = self._score_task_shape(expected, normalized)
-            semantic_score = self._score_semantic_alignment(expected, normalized)
+            semantic_score, semantic_details = self._score_semantic_alignment(expected, normalized)
             exact_match_score = 1.0 if expected == normalized else 0.0
 
-        base_score = (
-            (0.20 * 1.0)
-            + (0.25 * schema_score)
-            + (0.25 * execution_score)
-            + (0.15 * task_shape_score)
-            + (0.15 * semantic_score)
+        final_score = (
+            0.15 * 1.0
+            + 0.15 * schema_score
+            + 0.20 * execution_score
+            + 0.20 * task_shape_score
+            + 0.30 * semantic_score
         )
 
-        is_valid = execution_score >= 0.95 and schema_score >= 0.999 and not unknown_fields
+        final_score = round(final_score, 4)
 
-        # softer penalty so optimizer sees gradations instead of everything collapsing to 0.2
-        if is_valid:
-            final_score = round(base_score, 4)
-        else:
-            final_score = round(max(0.0, min(base_score, 0.75)), 4)
+        # strict validity: query must run, use known fields, and be semantically very close
+        is_valid = (
+            execution_score >= 0.95
+            and schema_score >= 0.999
+            and not unknown_fields
+            and task_shape_score >= 0.80
+            and semantic_score >= 0.85
+        )
 
         feedback_parts: list[str] = []
         if unknown_fields:
             feedback_parts.append(f"Unknown fields referenced: {', '.join(sorted(unknown_fields))}.")
         if execution_feedback:
             feedback_parts.append(execution_feedback)
+
+        if expected_query_dsl is not None:
+            semantic_messages = semantic_details.get("messages", [])
+            if semantic_messages:
+                feedback_parts.extend(semantic_messages)
+
         if not feedback_parts:
             feedback_parts.append("Query validated and executed successfully.")
 
@@ -151,6 +166,7 @@ class SandboxESClient(ESClient):
                 "referenced_fields": sorted(referenced_fields),
                 "unknown_fields": sorted(unknown_fields),
                 **execution_details,
+                **semantic_details,
             },
             safety_score=1.0,
             schema_score=schema_score,
@@ -259,8 +275,8 @@ class SandboxESClient(ESClient):
             int(("aggs" in expected) == ("aggs" in predicted)),
             int(("sort" in expected) == ("sort" in predicted)),
             int(("query" in expected) == ("query" in predicted)),
+            int(("track_total_hits" in expected) == ("track_total_hits" in predicted)),
             int(("_source" in expected) == ("_source" in predicted)),
-            int(self._contains_query_type(expected, "range") == self._contains_query_type(predicted, "range")),
         ]
 
         expected_size = expected.get("size")
@@ -274,18 +290,57 @@ class SandboxESClient(ESClient):
 
         return round(sum(checks) / max(1, len(checks)), 4)
 
-    def _score_semantic_alignment(self, expected: dict[str, Any], predicted: dict[str, Any]) -> float:
+    def _score_semantic_alignment(self, expected: dict[str, Any], predicted: dict[str, Any]) -> tuple[float, dict[str, Any]]:
         expected_fields = self.extract_referenced_fields(expected)
         predicted_fields = self.extract_referenced_fields(predicted)
 
-        if not expected_fields and not predicted_fields:
-            return 1.0
-        if not expected_fields or not predicted_fields:
-            return 0.0
+        field_overlap_score = self._jaccard_score(expected_fields, predicted_fields)
 
-        overlap = len(expected_fields & predicted_fields)
-        union = len(expected_fields | predicted_fields)
-        return round(overlap / max(1, union), 4)
+        expected_terms = self._extract_terms_constraints(expected)
+        predicted_terms = self._extract_terms_constraints(predicted)
+        terms_score, term_messages = self._compare_terms_constraints(expected_terms, predicted_terms)
+
+        expected_ranges = self._extract_range_constraints(expected)
+        predicted_ranges = self._extract_range_constraints(predicted)
+        range_score, range_messages = self._compare_range_constraints(expected_ranges, predicted_ranges)
+
+        expected_aggs = self._extract_agg_signature(expected)
+        predicted_aggs = self._extract_agg_signature(predicted)
+        agg_score, agg_messages = self._compare_agg_signature(expected_aggs, predicted_aggs)
+
+        expected_sort = self._extract_sort_signature(expected)
+        predicted_sort = self._extract_sort_signature(predicted)
+        sort_score, sort_messages = self._compare_sort_signature(expected_sort, predicted_sort)
+
+        semantic_score = (
+            0.20 * field_overlap_score
+            + 0.35 * terms_score
+            + 0.20 * range_score
+            + 0.15 * agg_score
+            + 0.10 * sort_score
+        )
+        semantic_score = round(semantic_score, 4)
+
+        messages = term_messages + range_messages + agg_messages + sort_messages
+
+        return semantic_score, {
+            "expected_fields": sorted(expected_fields),
+            "predicted_fields": sorted(predicted_fields),
+            "expected_terms": expected_terms,
+            "predicted_terms": predicted_terms,
+            "expected_ranges": expected_ranges,
+            "predicted_ranges": predicted_ranges,
+            "expected_aggs": expected_aggs,
+            "predicted_aggs": predicted_aggs,
+            "expected_sort": expected_sort,
+            "predicted_sort": predicted_sort,
+            "field_overlap_score": field_overlap_score,
+            "terms_score": terms_score,
+            "range_score": range_score,
+            "agg_score": agg_score,
+            "sort_score": sort_score,
+            "messages": messages,
+        }
 
     def extract_referenced_fields(self, query_dsl: dict[str, Any]) -> set[str]:
         fields: set[str] = set()
@@ -293,7 +348,6 @@ class SandboxESClient(ESClient):
         def visit(node: Any, parent_key: str | None = None) -> None:
             if isinstance(node, dict):
                 for key, value in node.items():
-                    # bool containers
                     if key in self.BOOL_KEYS:
                         visit(value, parent_key=key)
                         continue
@@ -302,17 +356,14 @@ class SandboxESClient(ESClient):
                         visit(value, parent_key="bool")
                         continue
 
-                    # query clauses with field name in key
-                    if key in self.QUERY_FIELD_TYPES and isinstance(value, dict):
+                    if key in {"term", "range", "match", "match_phrase", "wildcard", "prefix", "regexp"} and isinstance(value, dict):
                         for field_name, field_clause in value.items():
                             fields.add(field_name)
                             visit(field_clause, parent_key=key)
                         continue
 
-                    # query-style terms: {"terms": {"field_name": ["a", "b"]}}
                     if key == "terms" and isinstance(value, dict):
                         if "field" in value:
-                            # aggregation-style terms
                             field_value = value.get("field")
                             if isinstance(field_value, str):
                                 fields.add(field_value)
@@ -325,25 +376,21 @@ class SandboxESClient(ESClient):
                                 visit(field_clause, parent_key="terms_query")
                         continue
 
-                    # aggs block
                     if key == "aggs" and isinstance(value, dict):
                         for _, agg_body in value.items():
                             visit(agg_body, parent_key="aggs")
                         continue
 
-                    # aggregation operators
                     if key in self.AGG_FIELD_TYPES and isinstance(value, dict):
                         field_value = value.get("field")
                         if isinstance(field_value, str):
                             fields.add(field_value)
 
-                        # date_histogram often uses field/fixed_interval/calendar_interval
                         for inner_key, inner_value in value.items():
                             if inner_key != "field":
                                 visit(inner_value, parent_key=key)
                         continue
 
-                    # sort fields
                     if key == "sort":
                         if isinstance(value, list):
                             for item in value:
@@ -365,6 +412,243 @@ class SandboxESClient(ESClient):
 
         visit(query_dsl)
         return {field for field in fields if isinstance(field, str) and field.strip()}
+
+    def _extract_terms_constraints(self, query_dsl: dict[str, Any]) -> dict[str, list[str]]:
+        constraints: dict[str, set[str]] = {}
+
+        def visit(node: Any) -> None:
+            if isinstance(node, dict):
+                for key, value in node.items():
+                    if key == "term" and isinstance(value, dict):
+                        for field_name, field_value in value.items():
+                            constraints.setdefault(field_name, set()).add(str(field_value))
+                    elif key == "terms" and isinstance(value, dict):
+                        if "field" not in value:
+                            for field_name, field_values in value.items():
+                                if isinstance(field_values, list):
+                                    for item in field_values:
+                                        constraints.setdefault(field_name, set()).add(str(item))
+                                else:
+                                    constraints.setdefault(field_name, set()).add(str(field_values))
+                    else:
+                        visit(value)
+            elif isinstance(node, list):
+                for item in node:
+                    visit(item)
+
+        visit(query_dsl)
+        return {k: sorted(v) for k, v in constraints.items()}
+
+    def _extract_range_constraints(self, query_dsl: dict[str, Any]) -> dict[str, dict[str, Any]]:
+        constraints: dict[str, dict[str, Any]] = {}
+
+        def visit(node: Any) -> None:
+            if isinstance(node, dict):
+                for key, value in node.items():
+                    if key == "range" and isinstance(value, dict):
+                        for field_name, range_body in value.items():
+                            if isinstance(range_body, dict):
+                                constraints[field_name] = {
+                                    k: range_body[k]
+                                    for k in sorted(range_body.keys())
+                                }
+                    else:
+                        visit(value)
+            elif isinstance(node, list):
+                for item in node:
+                    visit(item)
+
+        visit(query_dsl)
+        return constraints
+
+    def _extract_agg_signature(self, query_dsl: dict[str, Any]) -> list[dict[str, Any]]:
+        signatures: list[dict[str, Any]] = []
+
+        aggs = query_dsl.get("aggs", {})
+        if not isinstance(aggs, dict):
+            return signatures
+
+        def walk_aggs(agg_dict: dict[str, Any]) -> None:
+            for agg_name, agg_body in agg_dict.items():
+                if not isinstance(agg_body, dict):
+                    continue
+                for agg_type, agg_cfg in agg_body.items():
+                    if agg_type == "aggs" and isinstance(agg_cfg, dict):
+                        walk_aggs(agg_cfg)
+                        continue
+                    if isinstance(agg_cfg, dict):
+                        signatures.append(
+                            {
+                                "name": agg_name,
+                                "type": agg_type,
+                                "field": agg_cfg.get("field"),
+                                "calendar_interval": agg_cfg.get("calendar_interval"),
+                                "fixed_interval": agg_cfg.get("fixed_interval"),
+                            }
+                        )
+                        if "aggs" in agg_cfg and isinstance(agg_cfg["aggs"], dict):
+                            walk_aggs(agg_cfg["aggs"])
+
+        walk_aggs(aggs)
+        return sorted(
+            signatures,
+            key=lambda x: (str(x.get("type")), str(x.get("field")), str(x.get("calendar_interval"))),
+        )
+
+    def _extract_sort_signature(self, query_dsl: dict[str, Any]) -> list[dict[str, Any]]:
+        signature: list[dict[str, Any]] = []
+        sort = query_dsl.get("sort", [])
+        if isinstance(sort, list):
+            for item in sort:
+                if isinstance(item, dict):
+                    for field, cfg in item.items():
+                        if isinstance(cfg, dict):
+                            signature.append({"field": field, "order": cfg.get("order", "asc")})
+                        else:
+                            signature.append({"field": field, "order": "asc"})
+        elif isinstance(sort, dict):
+            for field, cfg in sort.items():
+                if isinstance(cfg, dict):
+                    signature.append({"field": field, "order": cfg.get("order", "asc")})
+                else:
+                    signature.append({"field": field, "order": "asc"})
+        return signature
+
+    def _compare_terms_constraints(
+        self,
+        expected: dict[str, list[str]],
+        predicted: dict[str, list[str]],
+    ) -> tuple[float, list[str]]:
+        if not expected and not predicted:
+            return 1.0, []
+        if expected and not predicted:
+            return 0.0, ["Missing expected term/terms constraints."]
+        if predicted and not expected:
+            return 0.0, ["Predicted unexpected term/terms constraints."]
+
+        scores: list[float] = []
+        messages: list[str] = []
+
+        all_fields = sorted(set(expected.keys()) | set(predicted.keys()))
+        for field in all_fields:
+            exp_values = set(expected.get(field, []))
+            pred_values = set(predicted.get(field, []))
+            field_score = self._jaccard_score(exp_values, pred_values)
+            scores.append(field_score)
+
+            if exp_values != pred_values:
+                messages.append(
+                    f"Mismatch in constrained values for field '{field}': "
+                    f"expected={sorted(exp_values)}, predicted={sorted(pred_values)}."
+                )
+
+        return round(sum(scores) / max(1, len(scores)), 4), messages
+
+    def _compare_range_constraints(
+        self,
+        expected: dict[str, dict[str, Any]],
+        predicted: dict[str, dict[str, Any]],
+    ) -> tuple[float, list[str]]:
+        if not expected and not predicted:
+            return 1.0, []
+        if expected and not predicted:
+            return 0.0, ["Missing expected range constraints."]
+        if predicted and not expected:
+            return 0.0, ["Predicted unexpected range constraints."]
+
+        scores: list[float] = []
+        messages: list[str] = []
+
+        all_fields = sorted(set(expected.keys()) | set(predicted.keys()))
+        for field in all_fields:
+            exp_range = expected.get(field)
+            pred_range = predicted.get(field)
+
+            if exp_range == pred_range:
+                scores.append(1.0)
+            else:
+                scores.append(0.0)
+                messages.append(
+                    f"Mismatch in range constraint for field '{field}': "
+                    f"expected={exp_range}, predicted={pred_range}."
+                )
+
+        return round(sum(scores) / max(1, len(scores)), 4), messages
+
+    def _compare_agg_signature(
+        self,
+        expected: list[dict[str, Any]],
+        predicted: list[dict[str, Any]],
+    ) -> tuple[float, list[str]]:
+        if not expected and not predicted:
+            return 1.0, []
+        if expected and not predicted:
+            return 0.0, ["Missing expected aggregations."]
+        if predicted and not expected:
+            return 0.0, ["Predicted unexpected aggregations."]
+
+        expected_norm = [
+            {
+                "type": item.get("type"),
+                "field": item.get("field"),
+                "calendar_interval": item.get("calendar_interval"),
+                "fixed_interval": item.get("fixed_interval"),
+            }
+            for item in expected
+        ]
+        predicted_norm = [
+            {
+                "type": item.get("type"),
+                "field": item.get("field"),
+                "calendar_interval": item.get("calendar_interval"),
+                "fixed_interval": item.get("fixed_interval"),
+            }
+            for item in predicted
+        ]
+
+        score = self._jaccard_score(
+            {str(x) for x in expected_norm},
+            {str(x) for x in predicted_norm},
+        )
+
+        messages: list[str] = []
+        if score < 1.0:
+            messages.append(
+                f"Aggregation signature mismatch: expected={expected_norm}, predicted={predicted_norm}."
+            )
+
+        return score, messages
+
+    def _compare_sort_signature(
+        self,
+        expected: list[dict[str, Any]],
+        predicted: list[dict[str, Any]],
+    ) -> tuple[float, list[str]]:
+        if not expected and not predicted:
+            return 1.0, []
+        if expected and not predicted:
+            return 0.0, ["Missing expected sort clause."]
+        if predicted and not expected:
+            return 0.0, ["Predicted unexpected sort clause."]
+
+        score = self._jaccard_score(
+            {str(x) for x in expected},
+            {str(x) for x in predicted},
+        )
+
+        messages: list[str] = []
+        if score < 1.0:
+            messages.append(f"Sort signature mismatch: expected={expected}, predicted={predicted}.")
+
+        return score, messages
+
+    @staticmethod
+    def _jaccard_score(a: set[Any], b: set[Any]) -> float:
+        if not a and not b:
+            return 1.0
+        if not a or not b:
+            return 0.0
+        return round(len(a & b) / max(1, len(a | b)), 4)
 
     def _cap_query(self, query_dsl: dict[str, Any]) -> dict[str, Any]:
         body = deepcopy(query_dsl)
@@ -433,18 +717,6 @@ class SandboxESClient(ESClient):
             for item in node:
                 sizes.extend(SandboxESClient._find_terms_agg_sizes(item))
         return sizes
-
-    @staticmethod
-    def _contains_query_type(node: Any, query_type: str) -> bool:
-        if isinstance(node, dict):
-            for key, value in node.items():
-                if key == query_type:
-                    return True
-                if SandboxESClient._contains_query_type(value, query_type):
-                    return True
-        elif isinstance(node, list):
-            return any(SandboxESClient._contains_query_type(item, query_type) for item in node)
-        return False
 
     @staticmethod
     def _response_body(response: Any) -> dict[str, Any]:

@@ -14,6 +14,7 @@ class NLToQuerySignature(dspy.Signature):
     Hard rules:
     - Only use fields that appear in es_schema.
     - Never use scripts.
+    - Use V21Date for date related queries
     - For top-N / ranking requests, prefer size=0 with aggregations.
     - For record retrieval requests, return hits with a small size and useful _source fields.
     - For time-bounded requests, include a range on the real date field from es_schema.
@@ -71,7 +72,6 @@ class NLToQueryDSL(dspy.Module):
             )
             current_query_dsl = repaired.query_dsl
 
-        final_judge_result = _run_async(
-            self.dspy_judge.evaluate_query_dsl(generated_query_dsl=current_query_dsl)
-        )
+        final_judge_result = self.dspy_judge.evaluate_query_dsl(generated_query_dsl=current_query_dsl)
+        
         return dspy.Prediction(query_dsl=current_query_dsl, es_schema=es_schema, judge_result=final_judge_result)

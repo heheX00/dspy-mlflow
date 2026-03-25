@@ -67,7 +67,12 @@ def write_jsonl_rows(path: Path, rows: list[dict[str, Any]]) -> None:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
-def split_rows(rows: list[dict[str, Any]], train_ratio: float, seed: int) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def split_rows(
+    rows: list[dict[str, Any]],
+    train_ratio: float,
+    seed: int,
+    min_dev_size: int = 20,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if not rows:
         raise ValueError("Dataset is empty. Add at least one JSONL row.")
     if len(rows) < 2:
@@ -77,9 +82,18 @@ def split_rows(rows: list[dict[str, Any]], train_ratio: float, seed: int) -> tup
 
     shuffled = list(rows)
     random.Random(seed).shuffle(shuffled)
-    split_index = max(1, min(len(shuffled) - 1, int(len(shuffled) * train_ratio)))
-    return shuffled[:split_index], shuffled[split_index:]
 
+    ratio_dev_size = len(shuffled) - int(len(shuffled) * train_ratio)
+    dev_size = max(min_dev_size, ratio_dev_size)
+
+    # keep at least 1 train row
+    dev_size = min(dev_size, len(shuffled) - 1)
+
+    split_index = len(shuffled) - dev_size
+    train_rows = shuffled[:split_index]
+    dev_rows = shuffled[split_index:]
+
+    return train_rows, dev_rows
 
 def build_field_aliases(field_name: str) -> list[str]:
     aliases = [field_name, field_name.lower(), field_name.replace(".", " ").lower()]
@@ -199,6 +213,87 @@ def filter_incompatible_rows(
     return kept, dropped
 
 
+# def filter_incompatible_rows(
+#     rows: list[dict[str, Any]],
+#     sandbox_client: SandboxESClient,
+# ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+#     """
+#     Drop only if expected fields do not exist in sandbox mapping.
+#     If expected fields are missing only from retrieved es_schema text,
+#     repair the row by appending those field definitions.
+#     """
+#     flat_mapping = sandbox_client.get_flat_mapping()
+#     valid_fields = set(flat_mapping.keys())
+
+#     kept: list[dict[str, Any]] = []
+#     dropped: list[dict[str, Any]] = []
+
+#     for row in rows:
+#         expected_fields = extract_fields_from_expected_query(sandbox_client, row)
+#         schema_text = row.get("es_schema", "") or ""
+
+#         missing_in_mapping = sorted(field for field in expected_fields if field not in valid_fields)
+#         missing_in_schema = sorted(field for field in expected_fields if field not in schema_text)
+
+#         # Hard drop only if field truly does not exist in ES mapping
+#         if missing_in_mapping:
+#             bad_row = dict(row)
+#             bad_row["_drop_reason"] = {
+#                 "reason": "expected_fields_missing_from_sandbox_mapping",
+#                 "missing_in_mapping": missing_in_mapping,
+#                 "missing_in_schema": missing_in_schema,
+#                 "expected_fields": sorted(expected_fields),
+#             }
+#             dropped.append(bad_row)
+#             continue
+
+#         repaired_row = dict(row)
+
+#         # Soft repair if retriever did not include all needed fields
+#         if missing_in_schema:
+#             appendix = build_required_schema_appendix(
+#                 sandbox_client=sandbox_client,
+#                 required_fields=set(missing_in_schema),
+#             )
+#             repaired_row["es_schema"] = (
+#                 schema_text.strip()
+#                 + "\n\n### REQUIRED_FIELDS_APPENDIX ###\n"
+#                 + appendix
+#             )
+#             repaired_row["_schema_repair"] = {
+#                 "missing_in_schema_before_repair": missing_in_schema,
+#                 "expected_fields": sorted(expected_fields),
+#             }
+
+#         kept.append(repaired_row)
+
+#     return kept, dropped
+
+
+# def build_required_schema_appendix(
+#     sandbox_client: SandboxESClient,
+#     required_fields: set[str],
+# ) -> str:
+#     flat_mapping = sandbox_client.get_flat_mapping()
+#     lines: list[str] = []
+
+#     for field_name in sorted(required_fields):
+#         field_type = flat_mapping.get(field_name, "unknown")
+#         aliases = build_field_aliases(field_name)
+#         lines.append(
+#             "\n".join(
+#                 [
+#                     f"Field: {field_name}",
+#                     f"Type: {field_type}",
+#                     f"Aliases: {', '.join(aliases)}",
+#                     f"Usage: This field is relevant to the current task.",
+#                 ]
+#             )
+#         )
+
+#     return "\n\n".join(lines)
+
+
 def build_optimizer(metric_callable, optimizer_type: str):
     optimizer_type = optimizer_type.lower().strip()
     if optimizer_type == "mipro":
@@ -288,10 +383,23 @@ def print_summary(label: str, summary: dict[str, Any]) -> None:
     )
 
 
+def make_json_safe(obj):
+    if isinstance(obj, dict):
+        return {str(k): make_json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [make_json_safe(v) for v in obj]
+    if isinstance(obj, tuple):
+        return [make_json_safe(v) for v in obj]
+    if isinstance(obj, set):
+        return sorted(make_json_safe(v) for v in obj)
+    return obj
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Optimize the Team A DSPy Elasticsearch query generator.")
     parser.add_argument("--dataset", default=str(TEAM_A_ROOT / "data" / "optimizer_fullset.jsonl"))
     parser.add_argument("--train-ratio", type=float, default=0.8)
+    parser.add_argument("--min-dev-size", type=int, default=20)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--optimizer-type", choices=["bootstrap", "mipro"], default="mipro")
     parser.add_argument("--metric-type", choices=["execution", "exact"], default="execution")
@@ -325,17 +433,31 @@ def main() -> None:
     judge = JudgeDSPY(sandbox_es_client=sandbox_client)
 
     rows = load_jsonl_rows(dataset_path)
-    train_rows, dev_rows = split_rows(rows, train_ratio=args.train_ratio, seed=args.seed)
 
     chroma_client = ChromaClient(dev=settings.dev)
     ensure_chroma_has_schema(chroma_client, sandbox_client)
     schema_retriever = SchemaRetriever(chroma_client=chroma_client)
 
-    train_rows = enrich_rows_with_schema(train_rows, schema_retriever)
-    dev_rows = enrich_rows_with_schema(dev_rows, schema_retriever)
+    all_rows = enrich_rows_with_schema(rows, schema_retriever)
+    kept_rows, dropped_rows = filter_incompatible_rows(all_rows, sandbox_client)
+    
+    print("Total rows:", len(rows))
+    print("Kept rows:", len(kept_rows))
+    print("Dropped rows:", len(dropped_rows))
 
-    train_rows, dropped_train_rows = filter_incompatible_rows(train_rows, sandbox_client)
-    dev_rows, dropped_dev_rows = filter_incompatible_rows(dev_rows, sandbox_client)
+
+    if len(kept_rows) < 2:
+        raise ValueError("Not enough compatible rows remain after filtering.")
+
+    train_rows, dev_rows = split_rows(
+        kept_rows,
+        train_ratio=args.train_ratio,
+        seed=args.seed,
+        min_dev_size=args.min_dev_size,
+    )
+
+    dropped_train_rows = []
+    dropped_dev_rows = dropped_rows
 
     if not train_rows:
         raise ValueError("All train rows were dropped as incompatible with sandbox mapping/schema.")
@@ -405,8 +527,7 @@ def main() -> None:
 
     report_output_path.parent.mkdir(parents=True, exist_ok=True)
     with report_output_path.open("w", encoding="utf-8") as f:
-        json.dump(report, f, indent=2, ensure_ascii=False)
-
+        json.dump(make_json_safe(report), f, indent=2, ensure_ascii=False)
     sandbox_client.close()
 
     print(f"Loaded dataset: {dataset_path}")
