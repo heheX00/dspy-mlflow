@@ -14,11 +14,16 @@ TEAM_A_ROOT = THIS_FILE.parents[1]
 if str(TEAM_A_ROOT) not in sys.path:
     sys.path.insert(0, str(TEAM_A_ROOT))
 
-from metrics.es_query_metric import ExecutionAwareESMetric, metric_exact_query_dsl, normalize_query_dsl
+from metrics.es_query_metric import (
+    ExecutionAwareESMetric,
+    RelevanceAwareExecutionMetric,
+    metric_exact_query_dsl,
+    normalize_query_dsl,
+)
 from services.chroma_client import ChromaClient
 from services.config import settings
 from services.judge_dspy import JudgeDSPY
-from services.sandbox_es_client import SandboxESClient
+from services.es_client import ESClient
 from signatures.es_query_generator import NLToQuerySignature
 from signatures.schema_interpreter import SchemaRetriever
 
@@ -406,7 +411,7 @@ def main() -> None:
     parser.add_argument("--min-dev-size", type=int, default=20)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--optimizer-type", choices=["bootstrap", "mipro"], default="mipro")
-    parser.add_argument("--metric-type", choices=["execution", "exact"], default="execution")
+    parser.add_argument("--metric-type", choices=["execution", "relevance", "exact"], default="relevance")
     parser.add_argument(
         "--artifact-output",
         default=str(TEAM_A_ROOT / "optimizers" / "artifacts" / "optimized_query_generator.json"),
@@ -431,10 +436,14 @@ def main() -> None:
 
     configure_lm()
 
-    sandbox_client = SandboxESClient(
-        host="http://localhost:9200" if settings.dev else None
+    sandbox_client = ESClient(
+        host=settings.es_host,
+        username=settings.es_username,
+        password=settings.es_password,
+        index=settings.es_index,
+        verify_ssl=settings.es_verify_ssl
     )
-    judge = JudgeDSPY(sandbox_es_client=sandbox_client)
+    judge = JudgeDSPY(es_client=sandbox_client)
 
     rows = load_jsonl_rows(dataset_path)
 
@@ -484,6 +493,9 @@ def main() -> None:
     if args.metric_type == "execution":
         metric_callable = ExecutionAwareESMetric(sandbox_client=sandbox_client)
         metric_name = "ExecutionAwareESMetric"
+    elif args.metric_type == "relevance":
+        metric_callable = RelevanceAwareExecutionMetric(sandbox_client=sandbox_client, judge=judge)
+        metric_name = "RelevanceAwareExecutionMetric"
     else:
         metric_callable = metric_exact_query_dsl
         metric_name = "metric_exact_query_dsl"

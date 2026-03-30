@@ -17,7 +17,7 @@ def main() -> None:
         "--optimizer-type",
         "mipro",
         "--metric-type",
-        "execution",
+        "relevance",
     ]
 
     subprocess.run(cmd, check=True)

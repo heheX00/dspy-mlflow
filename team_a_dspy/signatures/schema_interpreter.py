@@ -9,14 +9,11 @@ from services.chroma_client import ChromaClient
 
 
 class SchemaInterpreter(dspy.Signature):
-    """
-    Analyze a GDELT field and produce a concise usage-oriented interpretation.
-    """
+    """Analyze a GDELT field and produce a concise usage-oriented interpretation."""
 
     field_name: str = dspy.InputField(desc="Name of the field in the Elasticsearch mapping.")
     field_type: str = dspy.InputField(desc="Elasticsearch field type.")
     sample_values: str = dspy.InputField(desc="Representative sample values from recent documents.")
-
     interpretation: str = dspy.OutputField(
         desc="Short explanation of the field meaning, common aliases, and how it should be queried."
     )
@@ -27,83 +24,37 @@ class DataAwareSchemaInterpreter(dspy.Module):
         super().__init__()
         self.interpret = dspy.Predict(SchemaInterpreter)
 
-    def forward(self, field_name: str, field_type: str, sample_values: str) -> str:
+    def forward(self, field_name: str, field_type: str, sample_values: Any):
         prediction = self.interpret(
             field_name=field_name,
             field_type=field_type,
-            sample_values=sample_values,
+            sample_values=str(sample_values),
         )
-        return str(prediction.interpretation)
+        return prediction.interpretation
 
 
-class SchemaRetriever:
-    """
-    Deterministic schema retriever.
+class PlanSchemaRetriver(dspy.Signature):
+    """Plan which schema concepts are needed for a natural language request."""
 
-    This is intentionally a plain Python class instead of a dspy.Module so that
-    optimizer clones do not attempt to deep-copy external Chroma client state.
-    """
+    nl_query: str = dspy.InputField(desc="The user's raw request.")
+    search_terms: str = dspy.OutputField(desc="Comma-separated distinct schema search terms needed.")
 
+
+class SchemaRetriever(dspy.Module):
     STOPWORDS = {
-        "the",
-        "a",
-        "an",
-        "of",
-        "for",
-        "to",
-        "in",
-        "on",
-        "at",
-        "by",
-        "with",
-        "from",
-        "about",
-        "show",
-        "find",
-        "get",
-        "give",
-        "list",
-        "top",
-        "latest",
-        "recent",
-        "news",
-        "articles",
-        "article",
-        "mentioned",
-        "last",
-        "this",
-        "that",
-        "and",
-        "or",
-        "is",
-        "are",
-        "was",
-        "were",
-        "what",
-        "which",
-        "who",
-        "how",
-        "many",
-        "much",
-        "overall",
-        "over",
-        "past",
-        "week",
-        "weeks",
-        "day",
-        "days",
-        "month",
-        "months",
-        "year",
-        "years",
-        "yesterday",
-        "today",
+        "top", "find", "show", "list", "get", "give", "tell", "mentioned", "last",
+        "this", "that", "and", "or", "is", "are", "was", "were", "what", "which",
+        "who", "how", "many", "much", "overall", "over", "past", "week", "weeks",
+        "day", "days", "month", "months", "year", "years", "yesterday", "today",
+        "news", "article", "articles", "recent",
     }
 
     def __init__(self, chroma_client: ChromaClient, k_primary: int = 10, k_fallback: int = 5):
+        super().__init__()
         self.chroma_client = chroma_client
         self.k_primary = k_primary
         self.k_fallback = k_fallback
+        self.retrieval_planner = dspy.ChainOfThought(PlanSchemaRetriver)
 
     def __call__(self, nl_query: str) -> str:
         return self.forward(nl_query)
@@ -111,17 +62,24 @@ class SchemaRetriever:
     def forward(self, nl_query: str) -> str:
         relevant_schema: dict[str, dict[str, Any]] = {}
 
-        primary_results = self.chroma_client.query(query_text=nl_query, k=self.k_primary)
-        for item in self.flatten_chroma_results(primary_results):
-            relevant_schema[item["field_name"]] = item
+        try:
+            plan = self.retrieval_planner(nl_query=nl_query)
+            planned_terms = [c.strip() for c in str(plan.search_terms).split(",") if c.strip()]
+        except Exception:
+            planned_terms = []
 
-        if len(relevant_schema) < 10:
-            for token in self._expand_query_terms(nl_query):
-                token_results = self.chroma_client.query(query_text=token, k=self.k_fallback)
-                for item in self.flatten_chroma_results(token_results):
-                    relevant_schema[item["field_name"]] = item
-                if len(relevant_schema) >= 15:
-                    break
+        search_terms = [nl_query] + planned_terms + self._expand_query_terms(nl_query)
+
+        seen_terms: set[str] = set()
+        for term in search_terms:
+            if not term or term in seen_terms:
+                continue
+            seen_terms.add(term)
+            results = self.chroma_client.query(query_text=term, k=self.k_primary if term == nl_query else self.k_fallback)
+            for item in self.flatten_chroma_results(results):
+                relevant_schema[item["field_name"]] = item
+            if len(relevant_schema) >= 15:
+                break
 
         if not relevant_schema:
             return "No relevant schema information found."
@@ -195,4 +153,5 @@ class SchemaRetriever:
                     "interpretation": str(doc_string),
                 }
             )
+
         return flattened_schema

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from collections import defaultdict
 
 import dspy
@@ -27,7 +25,6 @@ class DSPYClient:
         self.es_client = es_client
         self.chroma_client = chroma_client
         self.judge_dspy = judge_dspy
-
         self.lm = dspy.LM(
             base_url=settings.llm_base_url,
             model=f"openai/{settings.llm_model_name}",
@@ -37,7 +34,10 @@ class DSPYClient:
         dspy.configure(lm=self.lm)
 
         self.schema_interpreter = DataAwareSchemaInterpreter()
-        self.query_generator = NLToQueryDSL(chroma_client=self.chroma_client, dspy_judge=self.judge_dspy)
+        self.query_generator = NLToQueryDSL(
+            chroma_client=self.chroma_client,
+            dspy_judge=self.judge_dspy,
+        )
 
     def close(self) -> None:
         self.es_client.close()
@@ -98,6 +98,4 @@ class DSPYClient:
 
     def generate_query_dsl(self, query_text: str) -> dict:
         prediction = self.query_generator(nl_query=query_text)
-        if isinstance(prediction, dict):
-            return prediction
         return prediction.query_dsl

@@ -5,13 +5,13 @@ services:
     ports:
       - "8020:8000"
     volumes:
-      - chroma_data:/data
+      - ./chromadb/chroma_data:/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v2/heartbeat"]
       interval: 10s
       timeout: 5s
       retries: 20
-
+      
   sandbox_elasticsearch:
     build: ./sandbox_es
     container_name: sandbox_elasticsearch
@@ -21,7 +21,7 @@ services:
     ports:
       - "9200:9200"
     volumes:
-      - sandbox_es_data:/usr/share/elasticsearch/data
+      - ./sandbox_es/sandbox_es_data:/usr/share/elasticsearch/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
       interval: 10s
@@ -42,7 +42,7 @@ services:
         condition: service_healthy
       mlflow:
         condition: service_started
-
+    
   mlflow:
     build: ./team_b_mlflow
     container_name: mlflow
@@ -50,7 +50,32 @@ services:
       - "5000:5000"
     env_file:
       - .env
+    volumes:
+      - ./team_b_mlflow/tracking:/mlflow/tracking
+      - ./team_b_mlflow/artifacts:/mlflow/artifacts
+    command:
+      [
+        "mlflow",
+        "server",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "5000",
+        "--backend-store-uri",
+        "sqlite:////mlflow/tracking/mlflow.db",
+        "--default-artifact-root",
+        "/mlflow/artifacts",
+        "--allowed-hosts",
+        "*"
+      ]
+
+networks:
+  dspy-mlflow-network:
+    driver: bridge
 
 volumes:
   chroma_data:
+    driver: local
   sandbox_es_data:
+    driver: local
+  

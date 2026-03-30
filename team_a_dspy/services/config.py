@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 
+
 class Settings(BaseSettings):
     # ChromaDB
     chroma_host: str = "chromadb"
@@ -22,16 +23,23 @@ class Settings(BaseSettings):
     sandbox_es_verify_ssl: bool = False
     sandbox_es_index: str = "gkg_sandbox"
 
-    # DSPY
+    # DSPy / LLM
     llm_base_url: str
     llm_model_name: str
     llm_api_key: str
     max_result_docs: int = 20
     max_agg_buckets: int = 50
-    
+
+    # MLflow
+    mlflow_tracking_uri: str = "http://mlflow:5000"
+    mlflow_experiment_name: str = "dspy-genai"
+    mlflow_enable_dspy_autolog: bool = True
+
     # Other settings
     dev: bool = True
+
     class Config:
         env_file = ".env"
+
 
 settings = Settings()
